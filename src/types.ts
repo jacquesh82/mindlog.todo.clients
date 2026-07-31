@@ -275,3 +275,18 @@ export interface Karma {
   completedThisWeek: number;
   streakDays: number;
 }
+
+/**
+ * Deployment metadata from GET /api/v1/version. `authProviders` reports which
+ * sign-in paths the server actually has credentials for, so the login page can
+ * hide the rest instead of offering routes that 503 or silently do nothing.
+ */
+export interface VersionInfo {
+  version: string;
+  buildDate: string;
+  authProviders?: {
+    mindlogId: boolean;
+    google: boolean;
+    passwordReset: boolean;
+  };
+}

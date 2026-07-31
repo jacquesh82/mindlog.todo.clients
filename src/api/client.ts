@@ -26,6 +26,7 @@ import type {
   TaskHit,
   TaskStatus,
   User,
+  VersionInfo,
 } from '../types';
 
 export const API: string = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
@@ -488,9 +489,10 @@ export const api = {
     return request<StorageUsage>('/api/v1/storage');
   },
 
-  // deployed version (Settings → About)
-  version(): Promise<{ version: string; buildDate: string }> {
-    return request<{ version: string; buildDate: string }>('/api/v1/version');
+  // deployed version (Settings → About) + which sign-in paths this deployment
+  // has configured (the login page hides the ones that are off).
+  version(): Promise<VersionInfo> {
+    return request<VersionInfo>('/api/v1/version');
   },
 
   // AI activity

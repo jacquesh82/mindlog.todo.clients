@@ -1,7 +1,17 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api/client';
 import { useI18n } from '../i18n';
 import { useAuth } from './AuthContext';
+import type { VersionInfo } from '../types';
+
+/**
+ * Which sign-in paths this deployment has configured. Until GET /api/v1/version
+ * answers we show none of the optional ones: flashing a button that then vanishes
+ * is worse than it appearing a moment late. If the call fails we keep them hidden
+ * rather than offering routes that may not work.
+ */
+type Providers = NonNullable<VersionInfo['authProviders']>;
+const NO_PROVIDERS: Providers = { mindlogId: false, google: false, passwordReset: false };
 
 type Mode = 'login' | 'register' | 'forgot';
 
@@ -15,6 +25,14 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [providers, setProviders] = useState<Providers>(NO_PROVIDERS);
+
+  useEffect(() => {
+    void api
+      .version()
+      .then((v) => setProviders(v.authProviders ?? NO_PROVIDERS))
+      .catch(() => setProviders(NO_PROVIDERS));
+  }, []);
 
   function switchMode(next: Mode) {
     setMode(next);
@@ -157,24 +175,28 @@ export function LoginPage() {
             </button>
           </form>
 
-          {mode === 'login' && (
+          {mode === 'login' && providers.passwordReset && (
             <button type="button" className="link forgot-link" onClick={() => switchMode('forgot')}>
               {t('login.forgot')}
             </button>
           )}
 
-          <a className="google-btn mindlogid-btn" href={api.mindlogIdUrl()}>
-            <img
-              src={`${import.meta.env.BASE_URL}milo.svg`}
-              alt=""
-              aria-hidden="true"
-              className="provider-icon"
-            />
-            <span className="mindlogid-label">{t('login.mindlogIdBtn')}</span>
-          </a>
-          <a className="google-btn" href={api.googleUrl()}>
-            Sign in with Google
-          </a>
+          {providers.mindlogId && (
+            <a className="google-btn mindlogid-btn" href={api.mindlogIdUrl()}>
+              <img
+                src={`${import.meta.env.BASE_URL}milo.svg`}
+                alt=""
+                aria-hidden="true"
+                className="provider-icon"
+              />
+              <span className="mindlogid-label">{t('login.mindlogIdBtn')}</span>
+            </a>
+          )}
+          {providers.google && (
+            <a className="google-btn" href={api.googleUrl()}>
+              Sign in with Google
+            </a>
+          )}
 
           <p className="muted switch">
             {mode === 'login' ? "No account?" : 'Have an account?'}{' '}
