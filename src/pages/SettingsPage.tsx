@@ -15,7 +15,17 @@ import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
 import { isTourDisabled, setTourDisabled, startTour } from '../tour';
 import { OSS_DEPENDENCIES } from '../oss';
-import type { AiLog, AiSettings, AiUsage, ApiKey, CalendarSource, PromptView, StorageUsage, User } from '../types';
+import type {
+  AiLog,
+  AiSettings,
+  AiUsage,
+  ApiKey,
+  ApiKeyCreated,
+  CalendarSource,
+  PromptView,
+  StorageUsage,
+  User,
+} from '../types';
 
 /** Inline stroke icon (Lucide geometry) — replaces emoji so icons theme + scale cleanly. */
 function Svg({ className, children }: { className?: string; children: React.ReactNode }) {
@@ -163,7 +173,7 @@ function McpConnectorCard() {
   const dialog = useDialog();
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [name, setName] = useState('');
-  const [created, setCreated] = useState<ApiKey | null>(null);
+  const [created, setCreated] = useState<ApiKeyCreated | null>(null);
   const [oauth, setOauth] = useState<{ clientId: string; clientSecret?: string } | null>(null);
   const [genning, setGenning] = useState(false);
 

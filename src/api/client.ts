@@ -3,6 +3,7 @@ import type {
   AiSettings,
   AiUsage,
   ApiKey,
+  ApiKeyCreated,
   Attachment,
   CalendarSource,
   ExternalEvent,
@@ -507,8 +508,8 @@ export const api = {
   listApiKeys(): Promise<ApiKey[]> {
     return request<ApiKey[]>('/api/v1/api-keys');
   },
-  createApiKey(name?: string): Promise<ApiKey> {
-    return request<ApiKey>('/api/v1/api-keys', { method: 'POST', body: JSON.stringify({ name }) });
+  createApiKey(name?: string): Promise<ApiKeyCreated> {
+    return request<ApiKeyCreated>('/api/v1/api-keys', { method: 'POST', body: JSON.stringify({ name }) });
   },
   deleteApiKey(id: string): Promise<void> {
     return request<void>(`/api/v1/api-keys/${id}`, { method: 'DELETE' });
