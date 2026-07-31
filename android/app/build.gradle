@@ -1,0 +1,75 @@
+apply plugin: 'com.android.application'
+
+// Environnement ciblé (-PmindlogEnv=qualif|prod|local), même convention que
+// mindlog.talk. Hors prod, l'applicationId reçoit le suffixe `.testing` : l'app
+// de test s'installe donc À CÔTÉ de la prod au lieu de l'écraser.
+// `scripts/gradle.sh` passe toujours -PmindlogEnv explicitement d'après
+// MINDLOG_ENV ; le défaut `prod` ici ne sert qu'à un ./gradlew appelé à la main.
+def mindlogEnv = (project.findProperty("mindlogEnv") ?: "prod").toString().toLowerCase()
+def isTesting = mindlogEnv != "prod"
+def appId = isTesting ? "today.mindlog.todo.testing" : "today.mindlog.todo"
+def appLabel = isTesting ? "mindlog.todo (${mindlogEnv})" : "mindlog.todo"
+
+android {
+    // Le namespace (package du code Java/Kotlin, donc MainActivity) reste fixe :
+    // seul l'applicationId distingue les variantes, comme côté talk.
+    namespace "today.mindlog.todo"
+    compileSdk rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId appId
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName isTesting ? "1.7.1-${mindlogEnv}" : "1.7.1"
+
+        // Déclarées ici et retirées de res/values/strings.xml (sinon « duplicate
+        // resource »). custom_url_scheme doit suivre l'applicationId, faute de
+        // quoi les variantes se disputeraient le même schéma de deep link.
+        resValue "string", "app_name", appLabel
+        resValue "string", "title_activity_main", appLabel
+        resValue "string", "package_name", appId
+        resValue "string", "custom_url_scheme", appId
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

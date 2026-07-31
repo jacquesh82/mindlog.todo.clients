@@ -1,0 +1,5 @@
+package today.mindlog.todo;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}

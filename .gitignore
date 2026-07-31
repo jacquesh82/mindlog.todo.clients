@@ -1,0 +1,18 @@
+node_modules/
+
+# Assets recopiés depuis packages/web/dist par `cap sync` — régénérables,
+# jamais commités (sinon le bundle web est dupliqué dans l'historique).
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+
+# Sorties et état de build Gradle.
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/
+android/local.properties
+
+# Artefacts de publication (lourds).
+*.apk
+*.aab
