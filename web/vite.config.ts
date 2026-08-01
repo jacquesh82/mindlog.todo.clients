@@ -25,14 +25,17 @@ export default defineConfig({
       // sidecar already proxies /api, so this is a harmless fallback.
       '/api': process.env.VITE_DEV_API || 'http://localhost:8080',
     },
-    // The dev server runs behind nginx + the TLS gateway, so the browser reaches
-    // it at wss://todo.mindlog.localhost:443. A custom HMR path keeps the
-    // WebSocket handshake clear of the gateway's exact `location = /` redirect.
+    // The dev server runs behind nginx + the unified edge (edge/Caddyfile), so
+    // the browser reaches it at wss://todo.mindlog.today.localhost:443. A custom
+    // HMR path keeps the WebSocket handshake clear of the edge's `/` redirect to
+    // the marketing site. The path must live under /app so the edge routes it to
+    // the app and not to the vitrine; the dev nginx re-adds the prefix the edge
+    // strips (see mindlog.todo/nginx.dev.conf).
     hmr: {
-      host: process.env.VITE_HMR_HOST || 'todo.mindlog.localhost',
+      host: process.env.VITE_HMR_HOST || 'todo.mindlog.today.localhost',
       protocol: process.env.VITE_HMR_PROTOCOL || 'wss',
       clientPort: Number(process.env.VITE_HMR_PORT) || 443,
-      path: '/vite-hmr',
+      path: process.env.VITE_HMR_PATH || '/vite-hmr',
     },
   },
 });
