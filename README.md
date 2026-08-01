@@ -4,15 +4,21 @@ Tous les clients de todo, un dossier par plateforme. Convention commune :
 `docs/architecture/clients.md` du monorepo.
 
 ```
-web/        SPA React + Vite — client REST pur de l'API todo
-android/    coquille Capacitor autour de web/ (en service, publiée en qualif)
-ios/        à venir
+web/             SPA React + Vite — client REST pur de l'API todo
+android/         coquille Capacitor autour de web/ (en service, qualif)
+ios/             coquille Capacitor autour de web/ — à venir
+android-native/  implémentation Kotlin à part entière — à venir
+ios-native/      implémentation Swift à part entière — à venir
 ```
 
 **`web/` est le produit ; `android/` n'est qu'un emballage.** La coquille ne
 contient aucun code applicatif : sa `webDir` pointe sur `../web/dist` et
 `npm run sync` rebuild la SPA puis lance `cap sync`. Faire évoluer l'app mobile
 = faire évoluer le code web, puis rejouer une commande.
+
+Les dossiers `-native` échappent à cette règle : ce sont de vraies
+implémentations, avec leurs vues et leurs appels API, donc de la duplication
+assumée. Leurs README disent ce qu'elle coûte avant d'y toucher.
 
 ## Démarrage
 
