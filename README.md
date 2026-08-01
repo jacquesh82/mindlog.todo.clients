@@ -1,24 +1,24 @@
 # mindlog · todo — clients
 
-Tous les clients de todo, un dossier par plateforme. Convention commune :
-`docs/architecture/clients.md` du monorepo.
+Les clients de [mindlog · todo](https://github.com/jacquesh82/mindlog.todo), un
+gestionnaire de tâches avec API REST et serveur MCP. Un dossier par plateforme.
 
 ```
-web/             SPA React + Vite — client REST pur de l'API todo
-android/         coquille Capacitor autour de web/ (en service, qualif)
-ios/             coquille Capacitor autour de web/ — à venir
-android-native/  implémentation Kotlin à part entière — à venir
-ios-native/      implémentation Swift à part entière — à venir
+web/             SPA React + Vite — client REST de l'API todo
+android/         coquille Capacitor embarquant web/
+ios/             coquille Capacitor embarquant web/       (vide)
+android-native/  implémentation Kotlin / Compose          (vide)
+ios-native/      implémentation Swift / SwiftUI           (vide)
 ```
 
-**`web/` est le produit ; `android/` n'est qu'un emballage.** La coquille ne
-contient aucun code applicatif : sa `webDir` pointe sur `../web/dist` et
-`npm run sync` rebuild la SPA puis lance `cap sync`. Faire évoluer l'app mobile
-= faire évoluer le code web, puis rejouer une commande.
+`web/` porte l'interface et la logique ; `android/` n'embarque aucun code
+applicatif — sa `webDir` pointe sur `../web/dist`, et `npm run sync` reconstruit
+la SPA puis lance `cap sync`. Faire évoluer l'application mobile revient donc à
+faire évoluer le client web.
 
-Les dossiers `-native` échappent à cette règle : ce sont de vraies
-implémentations, avec leurs vues et leurs appels API, donc de la duplication
-assumée. Leurs README disent ce qu'elle coûte avant d'y toucher.
+Les dossiers `-native` sont prévus pour des implémentations complètes, qui
+redessinent les vues et réécrivent les appels réseau. Leurs README détaillent ce
+que cela implique.
 
 ## Démarrage
 
@@ -26,37 +26,47 @@ assumée. Leurs README disent ce qu'elle coûte avant d'y toucher.
 cd web && npm install && npm run dev     # Vite sur :5173
 ```
 
-L'API doit tourner à part — `cd ../mindlog.todo && docker compose up -d api`.
+L'API doit tourner à part : `cd ../mindlog.todo && docker compose up -d api`.
 
 ```sh
-cd android && npm install && npm run sync   # qualif ; puis build:debug / build:release
+cd android && npm install
+npm run sync            # environnement de qualification (défaut)
+npm run build:release   # APK de production
 ```
 
-## Rapport à `mindlog.todo`
+## Types partagés avec le serveur
 
-Le client était `mindlog.todo/packages/web`, un workspace npm du dépôt serveur.
-Il en est sorti avec son historique (69 commits, `git subtree split`) et n'a
-plus aucune dépendance de workspace : `npm ci && npm run build` suffit, et
-l'image Docker se construit depuis `web/` seul.
+`web/src/types.ts` réexporte une quarantaine de types depuis `@mindlog/core`, le
+paquet de domaine du service. Ce sont des `import type`, effacés à la
+compilation : ni le bundle ni l'image Docker n'en dépendent, seul
+`npm run typecheck` les résout.
 
-Reste **un seul lien**, volontaire : `src/types.ts` importe ~35 types depuis
-`@mindlog/core`. Ce sont des `import type`, effacés par esbuild — ni le bundle
-ni l'image n'en ont besoin. Seul `npm run typecheck` les résout, via un `paths`
-du `tsconfig.json` visant les déclarations compilées du dépôt frère :
+La résolution passe par un `paths` du `tsconfig.json` visant les déclarations
+compilées du dépôt du service. Le typecheck suppose donc `mindlog.todo` cloné à
+côté de ce dépôt et construit :
 
 ```sh
-cd ../mindlog.todo && npm run build -w @mindlog/core   # prérequis au typecheck
+cd ../mindlog.todo && npm install && npm run build -w @mindlog/core
 ```
 
-Les redéclarer ici serait pire : c'est exactement la divergence que le commit
-« re-export shared API types from core » avait corrigée — `Task.completedAt`
-existait côté serveur et restait invisible côté client, `Task.children?`
-traînait sans usage.
+Redéclarer ces types ici les ferait diverger de ceux du serveur sans qu'aucune
+erreur ne le signale.
 
-## Déploiement
+## Image Docker
 
-L'image web est construite et poussée par la CI de **ce** dépôt
-(`.github/workflows/build-web.yml` → `ghcr.io/jacquesh82/mindlog.todo/web`).
-`mindlog.todo` ne construit plus que l'API et pilote le compose de prod, où le
-tag de l'image web est désormais une variable distincte (`WEB_TAG`) : les deux
-dépôts ont des SHA différents, un tag commun n'avait plus de sens.
+L'image du client web est construite par la CI de ce dépôt et publiée sur
+`ghcr.io/jacquesh82/mindlog.todo.clients/web`. Elle se construit aussi en local,
+le contexte étant `web/` seul :
+
+```sh
+cd web && docker build --build-arg VITE_API_URL=/app --build-arg VITE_BASE=/app/ -t todo-web .
+```
+
+`VITE_BASE` préfixe les URL des assets : la SPA est servie sous le sous-chemin
+`/app` en production. Le déploiement de la pile (compose, reverse proxy) est
+piloté depuis le dépôt du service, qui référence l'image via la variable
+`WEB_TAG`.
+
+## Licence
+
+AGPL-3.0-or-later — voir [LICENSE](LICENSE).

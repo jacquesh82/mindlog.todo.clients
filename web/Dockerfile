@@ -1,11 +1,9 @@
-# Image du client web todo. Contexte de build = ce dossier (`web/`), plus rien
-# au-dessus : depuis la sortie du monorepo `mindlog.todo`, ce client n'a plus
-# aucune dépendance de workspace.
+# Image du client web todo. Le contexte de build est ce dossier : le client n'a
+# aucune dépendance en dehors de son propre `package.json`.
 #
-# `@mindlog/core` n'est PAS nécessaire ici. Le client ne lui emprunte que des
-# types (`import type`), effacés par esbuild — l'ancien Dockerfile ne copiait
-# d'ailleurs que son `package.json`, jamais son code. Seul `npm run typecheck`
-# le résout, depuis la source du dépôt frère (cf. tsconfig.json).
+# `@mindlog/core` n'est pas nécessaire ici — le client ne lui emprunte que des
+# types, effacés à la compilation. Seul `npm run typecheck` le résout, depuis le
+# dépôt du service (cf. tsconfig.json).
 FROM node:24-bookworm AS build
 WORKDIR /app
 ARG VITE_API_URL

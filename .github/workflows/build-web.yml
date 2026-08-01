@@ -1,9 +1,9 @@
 name: Build web image
 
-# Le client web a quitté `mindlog.todo` : son image est donc construite ici.
-# `mindlog.todo` ne bâtit plus que l'API et pilote le compose de prod, où le tag
-# de l'image web est une variable distincte (WEB_TAG) — les deux dépôts ont des
-# SHA différents, un tag commun n'avait plus de sens.
+# Construit et publie l'image du client web. Le déploiement de la pile est
+# piloté depuis le dépôt du service, qui référence cette image par la variable
+# `WEB_TAG` — indépendante du tag de l'image de l'API, les deux dépôts ayant
+# leurs propres révisions.
 on:
   workflow_dispatch:
   push:
@@ -21,9 +21,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  # Paquet propre à CE dépôt : `ghcr.io/jacquesh82/mindlog.todo.clients/web`.
-  # Republier sous `mindlog.todo/web` supposerait d'autoriser à la main ce dépôt
-  # sur un paquet rattaché à un autre — friction inutile pour un renommage.
+  # Publie sous le paquet de ce dépôt : ghcr.io/jacquesh82/mindlog.todo.clients/web
   IMAGE_BASE: ${{ github.repository }}
 
 jobs:
@@ -55,8 +53,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Contexte = `web/` seul. Depuis la sortie du workspace, l'image n'a plus
-      # besoin de rien au-dessus : `npm ci && npm run build`.
+      # Contexte = `web/` seul : l'image se construit en `npm ci && npm run build`.
       - name: Build & push web image
         uses: docker/build-push-action@v6
         with:
@@ -75,6 +72,5 @@ jobs:
       - name: Rappel de mise en service
         run: |
           echo "Image poussée : ${{ steps.meta.outputs.prefix }}/web:${{ steps.meta.outputs.tag }}"
-          echo "Elle n'est PAS déployée par ce workflow — le rollout de la stack"
-          echo "reste piloté depuis mindlog.todo (compose + secrets SSH str01)."
-          echo "Sur str01 : WEB_TAG=${{ steps.meta.outputs.tag }} docker compose -f docker-compose.prod.yml up -d web"
+          echo "Ce workflow ne déploie pas : la mise en service se fait depuis le"
+          echo "dépôt du service, par WEB_TAG=${{ steps.meta.outputs.tag }} docker compose up -d web"

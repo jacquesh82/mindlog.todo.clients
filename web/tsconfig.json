@@ -1,10 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  // Autonome : plus de `extends` vers un tsconfig.base.json du monorepo. Le
-  // contexte de build Docker est ce dossier, il ne peut rien lire au-dessus, et
-  // ce dépôt n'a qu'un seul projet TypeScript — une base partagée n'aurait
-  // personne d'autre à servir. Les options ci-dessous sont l'aplatissement de
-  // l'ancien `mindlog.todo/tsconfig.base.json` + les surcharges du client.
+  // Configuration autonome, sans `extends` : le contexte de build Docker est ce
+  // dossier et ne peut rien lire au-dessus.
   "compilerOptions": {
     "target": "ES2023",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
@@ -25,25 +22,18 @@
     "noEmit": true,
     "types": [],
 
-    // `@mindlog/core` n'est plus une dépendance installée : c'est le paquet
-    // serveur de `mindlog.todo` (argon2, pg, transformers…), l'installer pour
-    // typer un client web serait absurde. Le client ne lui emprunte que des
-    // types (`import type`, effacés par esbuild) : ni le bundle ni l'image
-    // Docker n'en ont besoin, seul `npm run typecheck` le résout — ici depuis
-    // la source du dépôt frère.
+    // `src/types.ts` réexporte les types du domaine depuis `@mindlog/core`, le
+    // paquet du service. Ce sont des `import type`, effacés à la compilation :
+    // le paquet n'est donc pas une dépendance installée — ni le bundle ni
+    // l'image Docker n'en ont besoin — et seul `npm run typecheck` le résout.
     //
-    // Les redéclarer localement réintroduirait la divergence que le commit
-    // « re-export shared API types from core » avait justement corrigée
-    // (`Task.completedAt` invisible côté client, `Task.children?` fantôme).
+    // La cible est le fichier de DÉCLARATIONS compilé, non la source : `core`
+    // est un paquet serveur, et le typer entraînerait la vérification de tout
+    // son arbre de dépendances. `skipLibCheck` traverse un `.d.ts` sans le
+    // vérifier.
     //
-    // On vise les DÉCLARATIONS COMPILÉES (`dist/*.d.ts`) et non la source :
-    // pointer sur `src/index.ts` faisait typechecker tout le serveur au passage
-    // (mjml sans types, paramètres implicites…), des erreurs qui ne regardent
-    // pas ce client. `skipLibCheck` traverse un `.d.ts` sans le vérifier.
-    //
-    // Conséquence assumée : `npm run typecheck` exige `mindlog.todo` cloné à
-    // côté et **construit** (`npm run build -w @mindlog/core`). Sans lui il
-    // échoue franchement, au lieu de typer sur des définitions périmées.
+    // `npm run typecheck` suppose donc `mindlog.todo` cloné à côté de ce dépôt
+    // et construit (`npm run build -w @mindlog/core`).
     "paths": {
       "@mindlog/core": ["../../mindlog.todo/packages/core/dist/index.d.ts"]
     }
