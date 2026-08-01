@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <!-- app_name, title_activity_main, package_name et custom_url_scheme sont
+         générés par app/build.gradle (resValue) : ils dépendent de -PmindlogEnv
+         pour que la variante de test porte l'applicationId
+         `today.mindlog.todo.testing` et s'installe à côté de la prod.
+         Ne pas les redéclarer ici : ce serait un conflit de ressource. -->
+</resources>

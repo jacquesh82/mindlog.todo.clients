@@ -1,0 +1,25 @@
+{
+  "name": "@mindlog/todo-android",
+  "version": "1.7.1",
+  "private": true,
+  "type": "module",
+  "description": "Coquille Capacitor Android du client web mindlog.todo — la SPA est embarquée dans l'APK, mise à jour par `npm run sync`.",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "sync": "bash scripts/sync.sh",
+    "sync:prod": "MINDLOG_ENV=prod bash scripts/sync.sh",
+    "sync:local": "MINDLOG_ENV=local bash scripts/sync.sh",
+    "build:debug": "bash scripts/sync.sh && bash scripts/gradle.sh assembleDebug",
+    "build:release": "MINDLOG_ENV=prod bash scripts/sync.sh && bash scripts/gradle.sh assembleRelease",
+    "install:debug": "bash scripts/sync.sh && bash scripts/gradle.sh installDebug",
+    "open": "cap open android",
+    "doctor": "cap doctor"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}
