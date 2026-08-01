@@ -1,0 +1,215 @@
+import { useEffect, useState, type FormEvent } from 'react';
+import { api } from '../api/client';
+import { useI18n } from '../i18n';
+import { useAuth } from './AuthContext';
+import type { VersionInfo } from '../types';
+
+/**
+ * Which sign-in paths this deployment has configured. Until GET /api/v1/version
+ * answers we show none of the optional ones: flashing a button that then vanishes
+ * is worse than it appearing a moment late. If the call fails we keep them hidden
+ * rather than offering routes that may not work.
+ */
+type Providers = NonNullable<VersionInfo['authProviders']>;
+const NO_PROVIDERS: Providers = { mindlogId: false, google: false, passwordReset: false };
+
+type Mode = 'login' | 'register' | 'forgot';
+
+export function LoginPage() {
+  const { login, register, mindlogIdNeedsEmail, completeMindlogId, cancelMindlogId } = useAuth();
+  const { t } = useI18n();
+  const [mode, setMode] = useState<Mode>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [providers, setProviders] = useState<Providers>(NO_PROVIDERS);
+
+  useEffect(() => {
+    void api
+      .version()
+      .then((v) => setProviders(v.authProviders ?? NO_PROVIDERS))
+      .catch(() => setProviders(NO_PROVIDERS));
+  }, []);
+
+  function switchMode(next: Mode) {
+    setMode(next);
+    setError(null);
+    setInfo(null);
+  }
+
+  async function submitMindlogIdEmail(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      await completeMindlogId(email);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // mindlog id signed the user in but the account has no email — ask for one to
+  // finish creating the todo account.
+  if (mindlogIdNeedsEmail) {
+    return (
+      <div className="auth-card">
+        <h1>mindlog.todo</h1>
+        <p className="muted">{t('login.mindlogIdEmailTitle')}</p>
+        <form onSubmit={submitMindlogIdEmail}>
+          <p className="muted" style={{ marginTop: 0 }}>{t('login.mindlogIdEmailHint')}</p>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            required
+            autoFocus
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          {error && <div className="error">{error}</div>}
+          <button type="submit" disabled={busy}>
+            {t('login.mindlogIdEmailSubmit')}
+          </button>
+          <p className="muted switch">
+            <button
+              type="button"
+              className="link"
+              onClick={() => {
+                cancelMindlogId();
+                setError(null);
+                setEmail('');
+              }}
+            >
+              {t('login.backToLogin')}
+            </button>
+          </p>
+        </form>
+      </div>
+    );
+  }
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+    setBusy(true);
+    try {
+      if (mode === 'login') await login(email, password);
+      else if (mode === 'register') await register(email, password, displayName || undefined);
+      else {
+        await api.forgotPassword(email);
+        setInfo(t('login.resetSent'));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const title =
+    mode === 'login'
+      ? 'Sign in to your account'
+      : mode === 'register'
+        ? 'Create an account'
+        : t('login.forgotTitle');
+
+  return (
+    <div className="auth-card">
+      <h1>mindlog.todo</h1>
+      <p className="muted">{title}</p>
+
+      {mode === 'forgot' ? (
+        <form onSubmit={submit}>
+          <p className="muted" style={{ marginTop: 0 }}>{t('login.forgotHint')}</p>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            required
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          {error && <div className="error">{error}</div>}
+          {info && <div className="info">{info}</div>}
+          <button type="submit" disabled={busy}>
+            {t('login.sendReset')}
+          </button>
+          <p className="muted switch">
+            <button type="button" className="link" onClick={() => switchMode('login')}>
+              {t('login.backToLogin')}
+            </button>
+          </p>
+        </form>
+      ) : (
+        <>
+          <form onSubmit={submit}>
+            {mode === 'register' && (
+              <input
+                placeholder="Display name (optional)"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
+            )}
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              required
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              required
+              minLength={8}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            {error && <div className="error">{error}</div>}
+            <button type="submit" disabled={busy}>
+              {mode === 'login' ? 'Sign in' : 'Register'}
+            </button>
+          </form>
+
+          {mode === 'login' && providers.passwordReset && (
+            <button type="button" className="link forgot-link" onClick={() => switchMode('forgot')}>
+              {t('login.forgot')}
+            </button>
+          )}
+
+          {providers.mindlogId && (
+            <a className="google-btn mindlogid-btn" href={api.mindlogIdUrl()}>
+              <img
+                src={`${import.meta.env.BASE_URL}milo.svg`}
+                alt=""
+                aria-hidden="true"
+                className="provider-icon"
+              />
+              <span className="mindlogid-label">{t('login.mindlogIdBtn')}</span>
+            </a>
+          )}
+          {providers.google && (
+            <a className="google-btn" href={api.googleUrl()}>
+              Sign in with Google
+            </a>
+          )}
+
+          <p className="muted switch">
+            {mode === 'login' ? "No account?" : 'Have an account?'}{' '}
+            <button
+              type="button"
+              className="link"
+              onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
+            >
+              {mode === 'login' ? 'Register' : 'Sign in'}
+            </button>
+          </p>
+        </>
+      )}
+    </div>
+  );
+}

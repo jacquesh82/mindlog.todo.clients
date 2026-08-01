@@ -1,0 +1,27 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { App } from './App';
+import { AuthProvider } from './auth/AuthContext';
+import { I18nProvider } from './i18n';
+import { applyAccent, applyTheme, getInitialAccent, getInitialTheme } from './theme';
+import { ToastProvider } from './toast';
+import { DialogProvider } from './dialog';
+import './styles.css';
+
+// Apply theme + accent before first paint to avoid a flash.
+applyTheme(getInitialTheme());
+applyAccent(getInitialAccent());
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <I18nProvider>
+      <ToastProvider>
+        <DialogProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </DialogProvider>
+      </ToastProvider>
+    </I18nProvider>
+  </StrictMode>,
+);

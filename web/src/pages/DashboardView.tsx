@@ -1,0 +1,151 @@
+import { useEffect, useState } from 'react';
+import { api } from '../api/client';
+import { AreaChart, DonutChart, Gauge, type Slice } from '../components/charts';
+import { useI18n } from '../i18n';
+import type { DashboardStats } from '../types';
+
+function ChartCard({ title, children, wide }: { title: string; children: React.ReactNode; wide?: boolean }) {
+  return (
+    <div className={`rounded-xl border border-line bg-surface p-4 ${wide ? 'sm:col-span-2' : ''}`}>
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted">{title}</h3>
+      <div className="flex items-center justify-center">{children}</div>
+    </div>
+  );
+}
+
+function Kpi({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
+  return (
+    <div className={`rounded-xl border border-line p-4 ${accent ? 'bg-brand-soft' : 'bg-surface'}`}>
+      <div className={`text-2xl font-semibold ${accent ? 'text-brand' : 'text-ink'}`}>
+        {typeof value === 'number' ? value.toLocaleString() : value}
+      </div>
+      <div className="mt-1 text-xs text-muted">{label}</div>
+    </div>
+  );
+}
+
+function GroupTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="mb-3 mt-6 text-sm font-semibold uppercase tracking-wide text-muted">{children}</h2>;
+}
+
+export function DashboardView() {
+  const { t } = useI18n();
+  const [s, setS] = useState<DashboardStats | null>(null);
+
+  useEffect(() => {
+    void api.dashboard().then(setS);
+  }, []);
+
+  if (!s) return <div className="p-8 text-muted">{t('common.loading')}</div>;
+
+  const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  const quotaPct = s.notes.storageQuota
+    ? Math.min(100, Math.round((s.notes.storageBytes / s.notes.storageQuota) * 100))
+    : 0;
+  const ragPct = s.notes.pages ? Math.round((s.notes.ragPages / s.notes.pages) * 100) : 0;
+
+  const priorityColors = ['--color-p1', '--color-p2', '--color-p3', '--color-p4'];
+  const prioritySlices: Slice[] = [
+    { label: 'P1', value: s.tasks.byPriority.p1, color: 'var(--color-p1)' },
+    { label: 'P2', value: s.tasks.byPriority.p2, color: 'var(--color-p2)' },
+    { label: 'P3', value: s.tasks.byPriority.p3, color: 'var(--color-p3)' },
+    { label: 'P4', value: s.tasks.byPriority.p4, color: 'var(--color-p4)' },
+  ];
+
+  return (
+    <div className="mx-auto max-w-4xl p-6">
+      <h1 className="text-xl font-semibold text-ink">{t('nav.dashboard')}</h1>
+
+      <GroupTitle>{t('dash.charts')}</GroupTitle>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <ChartCard title={t('dash.completionRate')}>
+          <Gauge value={s.tasks.completionRate} label={`${s.tasks.completed}/${s.tasks.total}`} />
+        </ChartCard>
+        <ChartCard title={t('dash.byPriority')}>
+          <div className="flex flex-col items-center gap-2">
+            <DonutChart data={prioritySlices} center={String(s.tasks.active)} sub={t('dash.active')} />
+            <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-muted">
+              {prioritySlices.map((p, i) => (
+                <span key={p.label} className="flex items-center gap-1">
+                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: `var(${priorityColors[i]})` }} />
+                  {p.label} · {p.value}
+                </span>
+              ))}
+            </div>
+          </div>
+        </ChartCard>
+        <ChartCard title={t('dash.trend')} wide>
+          <AreaChart data={s.completedTrend} />
+        </ChartCard>
+      </div>
+
+      <GroupTitle>{t('dash.tasks')}</GroupTitle>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Kpi label={t('dash.active')} value={s.tasks.active} accent />
+        <Kpi label={t('dash.completed')} value={s.tasks.completed} />
+        <Kpi label={t('dash.overdue')} value={s.tasks.overdue} />
+        <Kpi label={t('dash.dueToday')} value={s.tasks.dueToday} />
+        <Kpi label={t('dash.completedThisWeek')} value={s.tasks.completedThisWeek} />
+        <Kpi label={t('dash.completionRate')} value={`${s.tasks.completionRate}%`} />
+        <Kpi label={t('dash.total')} value={s.tasks.total} />
+      </div>
+
+      <GroupTitle>{t('dash.byPriority')}</GroupTitle>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Kpi label="P1" value={s.tasks.byPriority.p1} />
+        <Kpi label="P2" value={s.tasks.byPriority.p2} />
+        <Kpi label="P3" value={s.tasks.byPriority.p3} />
+        <Kpi label="P4" value={s.tasks.byPriority.p4} />
+      </div>
+
+      {s.karma && (
+        <>
+          <GroupTitle>{t('dash.karma')}</GroupTitle>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Kpi label={t('dash.level')} value={s.karma.level} accent />
+            <Kpi label={t('dash.points')} value={s.karma.points} />
+            <Kpi label={t('dash.streak')} value={`${s.karma.streakDays} ${t('karma.dayStreak')}`} />
+            <Kpi label={t('dash.completedThisWeek')} value={s.karma.completedThisWeek} />
+          </div>
+        </>
+      )}
+
+      <GroupTitle>{t('dash.notes')}</GroupTitle>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Kpi label={t('dash.notebooks')} value={s.notes.notebooks} accent />
+        <Kpi label={t('dash.pages')} value={s.notes.pages} />
+        <Kpi label={t('dash.ragPages')} value={`${s.notes.ragPages}/${s.notes.pages}`} />
+        <Kpi label={t('dash.storage')} value={mb(s.notes.storageBytes)} />
+      </div>
+
+      {/* AI-search coverage: how many pages are reachable by semantic "Ask AI". */}
+      <div className="mt-3 rounded-xl border border-line bg-surface p-4">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-semibold uppercase tracking-wide text-muted">{t('dash.ragCoverage')}</span>
+          <span className="text-muted">{ragPct}%</span>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded bg-line">
+          <div className="h-full bg-brand" style={{ width: `${ragPct}%` }} />
+        </div>
+        <p className="mt-1 text-xs text-muted">
+          {t('dash.ragCoverageHint', {
+            rag: s.notes.ragPages,
+            total: s.notes.pages,
+            out: s.notes.pages - s.notes.ragPages,
+          })}
+        </p>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between text-xs text-muted">
+        <span>{t('dash.quotaUsed')}</span>
+        <span>{quotaPct}%</span>
+      </div>
+      <div className="mt-1 h-2 overflow-hidden rounded bg-line">
+        <div className="h-full bg-brand" style={{ width: `${quotaPct}%` }} />
+      </div>
+      <p className="mt-1 text-xs text-muted">
+        {mb(s.notes.storageBytes)} / {mb(s.notes.storageQuota)}
+      </p>
+    </div>
+  );
+}

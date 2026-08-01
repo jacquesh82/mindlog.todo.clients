@@ -1,0 +1,546 @@
+import { useEffect, useState, type ReactNode } from 'react';
+import { api, ApiError } from '../api/client';
+import { useAuth } from '../auth/AuthContext';
+import { formatBytes, formatTokens } from '../format';
+import { useI18n, type Lang } from '../i18n';
+import { useToast } from '../toast';
+import type { AiCredits, Filter, Karma, Label, Project, StorageUsage } from '../types';
+import type { View } from '../app/view';
+import { Avatar } from './Avatar';
+import { FilterModal } from './FilterModal';
+import { LabelModal } from './LabelModal';
+import { ProjectModal } from './ProjectModal';
+import { FunnelIcon, HashIcon, TagIcon } from './SidebarIcons';
+
+/** Settings (gear) icon. */
+function SettingsIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
+/** Log-out (door + arrow) icon. */
+function LogoutIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+/** Counts of unfinished (non-done) tasks, keyed for each sidebar entry. */
+export interface SidebarCounts {
+  today: number;
+  upcoming: number;
+  inbox: number;
+  byProject: Record<string, number>;
+  byLabel: Record<string, number>;
+  byFilter: Record<string, number>;
+}
+
+interface Props {
+  projects: Project[];
+  labels: Label[];
+  filters: Filter[];
+  karma: Karma | null;
+  counts: SidebarCounts | null;
+  view: View;
+  onSelect: (view: View) => void;
+  onReload: () => void;
+  /** Mobile drawer open state (ignored on desktop, where the sidebar is static). */
+  open: boolean;
+  /** Dismiss the mobile drawer. */
+  onClose: () => void;
+}
+
+function Item({
+  active,
+  icon,
+  glyph,
+  label,
+  count,
+  onClick,
+  tour,
+}: {
+  active: boolean;
+  icon?: string;
+  /** A coloured SVG glyph; overrides the text `icon`. */
+  glyph?: ReactNode;
+  label: string;
+  count?: number;
+  onClick: () => void;
+  /** Optional `data-tour` anchor for the guided tour. */
+  tour?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      data-tour={tour}
+      className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition ${
+        active ? 'bg-brand-soft font-medium text-brand' : 'text-ink hover:bg-line/60'
+      }`}
+    >
+      {glyph ? (
+        <span className="flex w-4 shrink-0 justify-center">{glyph}</span>
+      ) : (
+        <span className="w-4 text-center">{icon}</span>
+      )}
+      <span className="flex-1 truncate">{label}</span>
+      {count !== undefined && count > 0 && <span className="text-xs text-muted">{count}</span>}
+    </button>
+  );
+}
+
+export function Sidebar({ projects, labels, filters, karma, counts, view, onSelect, onReload, open, onClose }: Props) {
+  const { t, lang, setLang } = useI18n();
+  const { user, logout } = useAuth();
+  const { toast } = useToast();
+  // null = closed, 'create' = new project, Project = edit that project.
+  const [modal, setModal] = useState<'create' | Project | null>(null);
+  const [labelModal, setLabelModal] = useState<'create' | Label | null>(null);
+  const [filterModal, setFilterModal] = useState<'create' | Filter | null>(null);
+  const [rootOver, setRootOver] = useState(false);
+
+  /** Drag-and-drop reparent: make `childId` a child of `parentId` (null = root). */
+  async function reparent(childId: string, parentId: string | null) {
+    if (childId === parentId) return;
+    try {
+      await api.updateProject(childId, { parentId });
+      onReload();
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : 'Move failed', 'error');
+    }
+  }
+
+  const inbox = projects.find((p) => p.isInbox);
+  const realProjects = projects.filter((p) => !p.isInbox);
+  // Flatten the project hierarchy depth-first for indented rendering.
+  const ids = new Set(realProjects.map((p) => p.id));
+  const byParent = new Map<string | null, Project[]>();
+  for (const p of realProjects) {
+    const key = p.parentId && ids.has(p.parentId) ? p.parentId : null;
+    (byParent.get(key) ?? byParent.set(key, []).get(key)!).push(p);
+  }
+  const orderedProjects: { project: Project; depth: number }[] = [];
+  const walk = (parent: string | null, depth: number) => {
+    for (const p of byParent.get(parent) ?? []) {
+      orderedProjects.push({ project: p, depth });
+      walk(p.id, depth + 1);
+    }
+  };
+  walk(null, 0);
+  const favProjects = projects.filter((p) => p.isFavorite);
+  const favLabels = labels.filter((l) => l.isFavorite);
+  const hasFavorites = favProjects.length > 0 || favLabels.length > 0;
+
+  const is = (k: View['kind'], id?: string) =>
+    view.kind === k && (id === undefined || (view as { id?: string }).id === id);
+
+  return (
+    // Phones: an off-canvas navigation drawer that slides in from the left (we
+    // animate `left` rather than `transform` so the `position: fixed` modals
+    // rendered below aren't trapped in a transformed containing block). From
+    // `md` up it reverts to the classic static, always-visible sidebar.
+    <aside
+      className={`fixed inset-y-0 z-40 flex h-full w-[min(18rem,85vw)] shrink-0 flex-col border-r border-line bg-sidebar transition-[left] duration-200 ease-out md:static md:left-auto md:z-auto md:w-64 ${
+        open ? 'left-0' : '-left-full'
+      }`}
+    >
+      <div className="flex items-center justify-between px-4 py-3">
+        <span data-tour="welcome" className="flex items-center gap-2 font-semibold text-brand">
+          {/* Milo mascot — enlarged so its (brand) color reads clearly; a future
+              `skin` prop can swap the asset. */}
+          <img
+            src={`${import.meta.env.BASE_URL}milo.svg`}
+            alt="Milo"
+            className="h-9 w-9 shrink-0"
+          />
+          {t('app.name')}
+        </span>
+        <div className="flex items-center gap-2 text-sm">
+          <button
+            className="text-muted hover:text-ink"
+            onClick={() => setLang((lang === 'fr' ? 'en' : 'fr') as Lang)}
+            title="FR / EN"
+          >
+            {lang.toUpperCase()}
+          </button>
+          {/* Drawer close — only meaningful on phones. */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t('common.close')}
+            className="flex h-9 w-9 items-center justify-center rounded-md text-muted hover:bg-line/60 hover:text-ink md:hidden"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-5 w-5" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto px-2 pb-4">
+        {/* Cross-cutting tools (not tied to tasks) sit at the very top. */}
+        <Item tour="search" active={is('search')} icon="🔎" label={t('nav.search')} onClick={() => onSelect({ kind: 'search' })} />
+        <Item tour="notes" active={is('notes')} icon="📓" label={t('nav.notes')} onClick={() => onSelect({ kind: 'notes' })} />
+        <Item tour="dashboard" active={is('dashboard')} icon="📊" label={t('nav.dashboard')} onClick={() => onSelect({ kind: 'dashboard' })} />
+
+        <Section title={t('nav.tasks')}>
+          <Item active={is('today')} icon="📆" label={t('nav.today')} count={counts?.today} onClick={() => onSelect({ kind: 'today' })} />
+          <Item active={is('upcoming')} icon="🗓" label={t('nav.upcoming')} count={counts?.upcoming} onClick={() => onSelect({ kind: 'upcoming' })} />
+          {inbox && (
+            <Item active={is('inbox')} icon="📥" label={t('nav.inbox')} count={counts?.inbox} onClick={() => onSelect({ kind: 'inbox', id: inbox.id })} />
+          )}
+        </Section>
+
+        {hasFavorites && (
+          <Section title={t('nav.favorites')}>
+            {favProjects.map((p) => (
+              <Item key={p.id} active={is('project', p.id)} glyph={<HashIcon color={p.color} />} label={p.name} count={counts?.byProject[p.id]} onClick={() => onSelect({ kind: 'project', id: p.id })} />
+            ))}
+            {favLabels.map((l) => (
+              <Item key={l.id} active={is('label', l.id)} glyph={<TagIcon color={l.color} />} label={l.name} count={counts?.byLabel[l.id]} onClick={() => onSelect({ kind: 'label', id: l.id })} />
+            ))}
+          </Section>
+        )}
+
+        <Section
+          title={t('nav.filters')}
+          action={
+            <button className="text-muted hover:text-brand" onClick={() => setFilterModal('create')} title={t('filter.add')}>
+              ＋
+            </button>
+          }
+        >
+          {filters.map((f) => (
+            <EditableRow
+              key={f.id}
+              active={is('filter', f.id)}
+              glyph={<FunnelIcon color={f.color} />}
+              label={f.name}
+              count={counts?.byFilter[f.id]}
+              onOpen={() => onSelect({ kind: 'filter', id: f.id })}
+              onEdit={() => setFilterModal(f)}
+            />
+          ))}
+          {filters.length === 0 && (
+            <button onClick={() => setFilterModal('create')} className="px-2 py-1.5 text-sm text-muted hover:text-brand">
+              ＋ {t('filter.add')}
+            </button>
+          )}
+        </Section>
+
+        <Section
+          title={t('nav.labels')}
+          action={
+            <button className="text-muted hover:text-brand" onClick={() => setLabelModal('create')} title={t('label.add')}>
+              ＋
+            </button>
+          }
+        >
+          {labels.map((l) => (
+            <EditableRow
+              key={l.id}
+              active={is('label', l.id)}
+              glyph={<TagIcon color={l.color} />}
+              label={l.name}
+              count={counts?.byLabel[l.id]}
+              onOpen={() => onSelect({ kind: 'label', id: l.id })}
+              onEdit={() => setLabelModal(l)}
+            />
+          ))}
+          {labels.length === 0 && (
+            <button onClick={() => setLabelModal('create')} className="px-2 py-1.5 text-sm text-muted hover:text-brand">
+              ＋ {t('label.add')}
+            </button>
+          )}
+        </Section>
+
+        <div
+          onDragOver={(e) => { e.preventDefault(); setRootOver(true); }}
+          onDragLeave={() => setRootOver(false)}
+          onDrop={(e) => {
+            setRootOver(false);
+            const id = e.dataTransfer.getData('text/project');
+            if (id) void reparent(id, null);
+          }}
+          className={rootOver ? 'rounded-md ring-2 ring-brand' : ''}
+        >
+        <Section
+          title={t('nav.projects')}
+          action={
+            <button className="text-muted hover:text-brand" onClick={() => setModal('create')} title={t('project.add')}>
+              ＋
+            </button>
+          }
+        >
+          {orderedProjects.map(({ project: p, depth }) => (
+            <ProjectRow
+              key={p.id}
+              project={p}
+              depth={depth}
+              active={is('project', p.id)}
+              count={counts?.byProject[p.id]}
+              onOpen={() => onSelect({ kind: 'project', id: p.id })}
+              onEdit={() => setModal(p)}
+              onReparent={reparent}
+            />
+          ))}
+          {realProjects.length === 0 && (
+            <button onClick={() => setModal('create')} className="px-2 py-1.5 text-sm text-muted hover:text-brand">
+              ＋ {t('project.add')}
+            </button>
+          )}
+        </Section>
+        </div>
+      </nav>
+
+      <UsageFooter />
+
+      {karma && (
+        <div className="border-t border-line px-4 py-2 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-ink">⚡ {karma.level}</span>
+            <span className="text-muted">{karma.points} pts</span>
+          </div>
+          <div className="mt-0.5 text-muted">
+            🔥 {karma.streakDays} {t('karma.dayStreak')} · {karma.completedToday} {t('karma.today')}
+          </div>
+        </div>
+      )}
+      <div className="flex items-center gap-2 border-t border-line px-4 py-2 text-xs text-muted">
+        <Avatar name={user?.displayName ?? user?.email} avatarUrl={user?.avatarUrl} size={28} />
+        <div className="min-w-0 flex-1 truncate text-ink">{user?.displayName ?? user?.email}</div>
+        <button
+          type="button"
+          data-tour="settings"
+          className="rounded p-1 text-muted hover:bg-line/60 hover:text-brand"
+          title={t('nav.settings')}
+          aria-label={t('nav.settings')}
+          onClick={() => onSelect({ kind: 'settings' })}
+        >
+          <SettingsIcon />
+        </button>
+        <button
+          type="button"
+          className="rounded p-1 text-muted hover:bg-line/60 hover:text-brand"
+          title={t('common.logout')}
+          aria-label={t('common.logout')}
+          onClick={() => void logout()}
+        >
+          <LogoutIcon />
+        </button>
+      </div>
+
+      {modal !== null && (
+        <ProjectModal
+          project={modal === 'create' ? undefined : modal}
+          projects={projects}
+          onClose={() => setModal(null)}
+          onSaved={onReload}
+        />
+      )}
+      {labelModal !== null && (
+        <LabelModal
+          label={labelModal === 'create' ? undefined : labelModal}
+          onClose={() => setLabelModal(null)}
+          onSaved={onReload}
+        />
+      )}
+      {filterModal !== null && (
+        <FilterModal
+          filter={filterModal === 'create' ? undefined : filterModal}
+          onClose={() => setFilterModal(null)}
+          onSaved={onReload}
+        />
+      )}
+    </aside>
+  );
+}
+
+/** A nav row with a coloured glyph and a hover ⋯ edit affordance (filters, labels). */
+function EditableRow({
+  active,
+  glyph,
+  label,
+  count,
+  onOpen,
+  onEdit,
+}: {
+  active: boolean;
+  glyph: ReactNode;
+  label: string;
+  count?: number;
+  onOpen: () => void;
+  onEdit: () => void;
+}) {
+  return (
+    <div className="group relative flex items-center">
+      <button
+        onClick={onOpen}
+        className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition ${
+          active ? 'bg-brand-soft font-medium text-brand' : 'text-ink hover:bg-line/60'
+        }`}
+      >
+        <span className="flex w-4 shrink-0 justify-center">{glyph}</span>
+        <span className="flex-1 truncate">{label}</span>
+        {count !== undefined && count > 0 && (
+          <span className="text-xs text-muted group-hover:invisible">{count}</span>
+        )}
+      </button>
+      <button
+        onClick={onEdit}
+        title="Edit"
+        className="absolute right-1 px-1 text-muted opacity-0 transition hover:text-brand group-hover:opacity-100"
+      >
+        ⋯
+      </button>
+    </div>
+  );
+}
+
+/** A project nav row with a hover "edit" affordance (avoids nested buttons). */
+function ProjectRow({
+  project,
+  active,
+  depth = 0,
+  count,
+  onOpen,
+  onEdit,
+  onReparent,
+}: {
+  project: Project;
+  active: boolean;
+  depth?: number;
+  count?: number;
+  onOpen: () => void;
+  onEdit: () => void;
+  onReparent: (childId: string, parentId: string) => void;
+}) {
+  const [over, setOver] = useState(false);
+  return (
+    <div
+      className={`group relative flex items-center rounded-md ${over ? 'ring-2 ring-brand' : ''}`}
+      draggable
+      onDragStart={(e) => e.dataTransfer.setData('text/project', project.id)}
+      onDragOver={(e) => { e.preventDefault(); setOver(true); }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setOver(false);
+        const id = e.dataTransfer.getData('text/project');
+        if (id && id !== project.id) onReparent(id, project.id);
+      }}
+    >
+      <button
+        onClick={onOpen}
+        style={{ paddingLeft: 8 + depth * 16 }}
+        className={`flex flex-1 items-center gap-2 rounded-md py-1.5 pr-2 text-left text-sm transition ${
+          active ? 'bg-brand-soft font-medium text-brand' : 'text-ink hover:bg-line/60'
+        }`}
+      >
+        <span className="flex w-4 shrink-0 justify-center">
+          <HashIcon color={project.color} />
+        </span>
+        <span className="flex-1 truncate">{project.name}</span>
+        {project.isFavorite && <span className="text-xs">★</span>}
+        {count !== undefined && count > 0 && (
+          <span className="text-xs text-muted group-hover:invisible">{count}</span>
+        )}
+      </button>
+      <button
+        onClick={onEdit}
+        title="Edit"
+        className="absolute right-1 opacity-0 transition group-hover:opacity-100 px-1 text-muted hover:text-brand"
+      >
+        ⋯
+      </button>
+    </div>
+  );
+}
+
+/** Always-visible footer: remaining AI credits (cloud) and remaining disk space. */
+function UsageFooter() {
+  const { t } = useI18n();
+  const [credits, setCredits] = useState<AiCredits | null>(null);
+  const [storage, setStorage] = useState<StorageUsage | null>(null);
+  useEffect(() => {
+    void api.getAiSettings().then((s) => setCredits(s.credits)).catch(() => {});
+    void api.storageUsage().then(setStorage).catch(() => {});
+  }, []);
+  if (!credits && !storage) return null;
+
+  const aiLeft = credits ? Math.max(0, credits.limitTokens - credits.usedTokens) : 0;
+  const aiPct = credits && credits.limitTokens > 0 ? Math.min(100, (credits.usedTokens / credits.limitTokens) * 100) : 0;
+  const diskQuota = storage?.quota ?? 0;
+  const diskUsed = storage?.totalBytes ?? 0;
+  const diskLeft = Math.max(0, diskQuota - diskUsed);
+  const diskPct = diskQuota > 0 ? Math.min(100, (diskUsed / diskQuota) * 100) : 0;
+
+  return (
+    <div className="space-y-1.5 border-t border-line px-4 py-2 text-xs text-muted">
+      {credits && (
+        <div>
+          <div className="flex items-center justify-between">
+            <span>🧠 {t('usage.ai')}</span>
+            <span className="text-ink">{formatTokens(aiLeft)} {t('usage.left')}</span>
+          </div>
+          <UsageBar pct={aiPct} />
+        </div>
+      )}
+      {storage && (
+        <div>
+          <div className="flex items-center justify-between">
+            <span>💾 {t('usage.disk')}</span>
+            <span className="text-ink">{formatBytes(diskLeft)} {t('usage.left')}</span>
+          </div>
+          <UsageBar pct={diskPct} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UsageBar({ pct }: { pct: number }) {
+  return (
+    <div className="mt-0.5 h-1 overflow-hidden rounded bg-line">
+      <div className="h-full bg-brand" style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted">
+        <span>{title}</span>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
