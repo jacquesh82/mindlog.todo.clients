@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 // Coquille Android du client web. Aucun code applicatif ici : `webDir` pointe
-// directement sur le build Vite de `@mindlog/web`, que `scripts/sync.sh`
+// directement sur le build Vite du client `../web`, que `scripts/sync.sh`
 // (re)génère avec les bonnes variables avant chaque `cap sync`.
 //
 // La WebView sert le bundle depuis l'origine `https://localhost` (androidScheme
@@ -17,7 +17,7 @@ const config: CapacitorConfig = {
   // prod. Ces deux champs ne servent qu'au runtime Capacitor et aux plugins.
   appId: 'today.mindlog.todo',
   appName: 'mindlog todo',
-  webDir: '../packages/web/dist',
+  webDir: '../web/dist',
   android: {
     // Le bundle est local : aucun contenu en clair ne doit être chargé.
     allowMixedContent: false,

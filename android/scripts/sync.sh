@@ -4,7 +4,7 @@
 #
 #   MINDLOG_ENV=qualif|prod|local  (défaut : qualif)
 #
-# 1. build Vite de @mindlog/web avec les variables propres à la coquille
+# 1. build Vite du client web (../web) avec les variables propres à la coquille
 #    (VITE_BASE=/ car les assets sont à la racine de l'APK, VITE_API_URL absolu
 #    car la WebView est sur une autre origine que l'API) ;
 # 2. `cap sync android` → copie dist/ dans android/app/src/main/assets/public
@@ -14,8 +14,8 @@
 # dans l'app Android.
 set -euo pipefail
 
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # mindlog.todo/android
-REPO="$(cd "$HERE/.." && pwd)"                            # mindlog.todo
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # mindlog.todo.clients/android
+WEB="$(cd "$HERE/../web" && pwd)"                         # mindlog.todo.clients/web
 
 ENV_NAME="${MINDLOG_ENV:-qualif}"
 ENV_FILE="$HERE/scripts/env/$ENV_NAME.env"
@@ -29,13 +29,13 @@ set -a; . "$ENV_FILE"; set +a
 export VITE_BASE=/
 
 echo "▸ [1/2] build web (env=$ENV_NAME, VITE_API_URL=$VITE_API_URL, VITE_BASE=$VITE_BASE)"
-( cd "$REPO" && npm run build -w @mindlog/web )
+( cd "$WEB" && npm run build )
 
 # Le dist/ produit ici est « saveur Android » (base=/ + API absolue) et n'est PAS
 # celui qu'attend le déploiement web (base=/app/ + API relative). On le marque
 # pour éviter qu'un build Docker local parte avec le mauvais bundle.
 printf 'built-by=android/scripts/sync.sh\nenv=%s\nVITE_API_URL=%s\nVITE_BASE=%s\n' \
-  "$ENV_NAME" "$VITE_API_URL" "$VITE_BASE" > "$REPO/packages/web/dist/.android-build"
+  "$ENV_NAME" "$VITE_API_URL" "$VITE_BASE" > "$WEB/dist/.android-build"
 
 echo "▸ [2/2] cap sync android"
 ( cd "$HERE" && npx cap sync android )

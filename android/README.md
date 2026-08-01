@@ -1,12 +1,12 @@
-# mindlog.todo — client Android (Capacitor)
+# mindlog · todo — client Android (Capacitor)
 
-Coquille [Capacitor](https://capacitorjs.com) autour du client web `@mindlog/web`.
+Coquille [Capacitor](https://capacitorjs.com) autour du client web `../web`.
 **Aucun code applicatif ici** : l'app embarque le build Vite de la SPA. Faire
 évoluer l'app Android = faire évoluer le code web, puis rejouer une commande.
 
 ```
 android/
-├─ capacitor.config.ts     appId, appName, webDir → ../packages/web/dist
+├─ capacitor.config.ts     appId, appName, webDir → ../web/dist
 ├─ scripts/
 │  ├─ sync.sh              build web + cap sync   ← LA commande de mise à jour
 │  ├─ gradle.sh            wrapper Gradle avec JDK 21 forcé
@@ -17,14 +17,14 @@ android/
 ## Mettre à jour l'app depuis le code web
 
 ```bash
-cd mindlog.todo/android
+cd mindlog.todo.clients/android
 npm run sync              # qualif (défaut) → todo.gra01.mindlog.today
 npm run sync:prod         # prod          → todo.mindlog.today
 npm run build:debug       # sync + APK debug
 npm run build:release     # sync + APK release (env=prod)
 ```
 
-`sync.sh` rebuild `@mindlog/web` puis `cap sync android`, qui recopie `dist/`
+`sync.sh` rebuild `../web` puis `cap sync android`, qui recopie `dist/`
 dans `android/app/src/main/assets/public`. C'est tout : il n'y a aucun code à
 maintenir en double.
 
@@ -37,10 +37,10 @@ APK produit dans `android/app/build/outputs/apk/{debug,release}/`.
 | `VITE_BASE` | `/app/` — la SPA vit sous un sous-chemin | `/` — les assets sont à la racine de l'APK |
 | `VITE_API_URL` | `/app` — relatif, même origine | **absolu** (`https://…/app`) — la WebView est sur `https://localhost` |
 
-Conséquence : après un `npm run sync`, `packages/web/dist` contient la **saveur
+Conséquence : après un `npm run sync`, `../web/dist` contient la **saveur
 Android**, pas celle du déploiement web. Un marqueur `dist/.android-build` le
 signale. Avant de builder l'image Docker web en local, refaire un build normal
-(`npm run build -w @mindlog/web`) — la CI, elle, part toujours d'un checkout
+(`cd ../web && npm run build`) — la CI, elle, part toujours d'un checkout
 propre et n'est donc pas concernée.
 
 Côté serveur **rien à configurer** : `app.use(cors())` accepte toutes les

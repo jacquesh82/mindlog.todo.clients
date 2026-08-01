@@ -1,0 +1,80 @@
+name: Build web image
+
+# Le client web a quitté `mindlog.todo` : son image est donc construite ici.
+# `mindlog.todo` ne bâtit plus que l'API et pilote le compose de prod, où le tag
+# de l'image web est une variable distincte (WEB_TAG) — les deux dépôts ont des
+# SHA différents, un tag commun n'avait plus de sens.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+    paths:
+      - 'web/**'
+      - '.github/workflows/build-web.yml'
+
+concurrency:
+  group: build-web
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  # Paquet propre à CE dépôt : `ghcr.io/jacquesh82/mindlog.todo.clients/web`.
+  # Republier sous `mindlog.todo/web` supposerait d'autoriser à la main ce dépôt
+  # sur un paquet rattaché à un autre — friction inutile pour un renommage.
+  IMAGE_BASE: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute image tag and lowercase prefix
+        id: meta
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="$(git rev-parse --short HEAD)"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "prefix=${REGISTRY}/$(echo "$IMAGE_BASE" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Contexte = `web/` seul. Depuis la sortie du workspace, l'image n'a plus
+      # besoin de rien au-dessus : `npm ci && npm run build`.
+      - name: Build & push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: web
+          file: web/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_URL=/app
+            VITE_BASE=/app/
+          tags: |
+            ${{ steps.meta.outputs.prefix }}/web:${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.prefix }}/web:latest
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+      - name: Rappel de mise en service
+        run: |
+          echo "Image poussée : ${{ steps.meta.outputs.prefix }}/web:${{ steps.meta.outputs.tag }}"
+          echo "Elle n'est PAS déployée par ce workflow — le rollout de la stack"
+          echo "reste piloté depuis mindlog.todo (compose + secrets SSH str01)."
+          echo "Sur str01 : WEB_TAG=${{ steps.meta.outputs.tag }} docker compose -f docker-compose.prod.yml up -d web"

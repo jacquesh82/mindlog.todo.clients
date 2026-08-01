@@ -1,58 +1,69 @@
-# Migration des clients todo vers `mindlog.todo.clients/`
+# Sortie des clients de `mindlog.todo` — compte rendu
 
-Relevé des couplages à traiter. **Rien n'a été déplacé** : cette liste est le
-travail à faire, pas un compte rendu.
+Migration faite le 2026-08-01. Ce document remplace le relevé de couplages qui
+servait à la préparer ; il dit ce qui a changé et ce qui reste ouvert.
 
-## Ce qui se déplace
+## Ce qui a bougé
 
 | Depuis | Vers |
 |---|---|
-| `mindlog.todo/packages/web/` | `mindlog.todo.clients/web/` |
-| `mindlog.todo/android/` | `mindlog.todo.clients/android/` |
+| `mindlog.todo/packages/web/` | `web/` |
+| `mindlog.todo/android/` | `android/` |
 
-## Ce que ça casse (relevé exhaustif au 2026-08-01)
+Déplacé avec l'historique (`git subtree split`) : 69 commits côté web, l'ajout
+de la coquille côté android. Les deux greffes ont été faites en `merge -s ours`
++ `read-tree --prefix`, donc `git log --follow` continue de remonter.
 
-**Workspace npm** — `packages/web` est le paquet `@mindlog/web`, déclaré dans
-les `workspaces` de `mindlog.todo/package.json` (l. 11) et figé dans
-`package-lock.json`. Sortir du dossier le sort du workspace : les scripts
-racine `build` (l. 17) et `dev:web` (l. 21), qui font `-w @mindlog/web`,
-tombent. Deux options : un workspace npm à la racine du monorepo (mais la
-racine n'est pas un dépôt git — cf. `BACKLOG-vitrines.md` § Points ouverts), ou
-un `package.json` autonome pour `mindlog.todo.clients` et des scripts de build
-propres.
+## Ce qu'il a fallu défaire
 
-**Contexte de build Docker** — `mindlog.todo/docker-compose.yml:62` et
-`.github/workflows/deploy.yml:70` référencent `packages/web/Dockerfile` ; ce
-Dockerfile est bâti depuis la racine de `mindlog.todo`. Un client hors du dépôt
-impose de remonter le contexte de build d'un cran, comme le fait déjà
-`edge/Dockerfile` (`docker build -f edge/Dockerfile ..`).
+**Workspace npm** — `web/` était `@mindlog/web`, workspace de `mindlog.todo`. Il
+devient `@mindlog/todo-web`, autonome, avec son propre `package-lock.json`. Les
+scripts racine `build` et `dev:web` du dépôt serveur ont été nettoyés.
 
-**Dockerfile du serveur** — `packages/server/Dockerfile:8` copie
-`packages/web/package.json` (pour l'installation des workspaces). À retirer si
-le web quitte le dépôt.
+**`@mindlog/core`** — retiré des dépendances. Le client ne lui empruntait que
+des types ; le lien passe désormais par un `paths` du `tsconfig.json` visant les
+**déclarations compilées** du dépôt frère. Viser la source faisait typechecker
+tout le serveur au passage (mjml sans types, paramètres implicites). Conséquence
+assumée : `npm run typecheck` exige `mindlog.todo` cloné à côté et construit.
 
-**CI de déploiement** — `.github/workflows/deploy.yml` l. 101/119-120 embarque
-`packages/web/nginx.prod.conf` dans le transfert vers l'hôte.
+**`tsconfig.base.json`** — aplati dans `web/tsconfig.json`. Il vivait au-dessus,
+donc hors du contexte de build Docker.
 
-**Capacitor** — `android/capacitor.config.ts:20` et le fichier généré
-`android/android/app/src/main/assets/capacitor.config.json:4` pointent sur
-`../packages/web/dist` ; `android/scripts/sync.sh` l. 32 lance
-`npm run build -w @mindlog/web` et l. 38 écrit `packages/web/dist/.android-build`.
-Les deux `capacitor.config` doivent rester cohérents (le `.json` est régénéré
-par `cap sync`, mais il est commité).
+**Dockerfile** — était conscient du workspace (`npm install -w @mindlog/web
+--include-workspace-root`, copie des `package.json` frères). Devient
+`npm ci && npm run build`, contexte = `web/` seul.
 
-**Documentation** — `mindlog.todo/README.md:20`, `ROADMAP.md:18`,
-`android/README.md` (l. 9 et 40).
+**Capacitor** — `webDir` passe de `../packages/web/dist` à `../web/dist`, et
+`scripts/sync.sh` build `../web` au lieu de `-w @mindlog/web`. Le
+`capacitor.config.json` généré dans les assets est gitignoré : rien à corriger
+là, `cap sync` le régénère.
 
-## Ordre suggéré
+**Configs nginx de déploiement** — `nginx.prod.conf` et `nginx.dev.conf` sont
+**restées dans `mindlog.todo`**. Elles sont montées par ses composes et
+expédiées sur str01 par sa CI : elles décrivent comment la stack tourne, pas
+comment le client se bâtit. Seul `nginx.conf`, baké dans l'image, est ici.
 
-1. Décider du modèle de paquet (workspace racine ou paquet autonome) — c'est la
-   décision structurante, tout le reste en découle.
-2. Déplacer `packages/web` → `mindlog.todo.clients/web`, corriger workspaces et
-   scripts, vérifier `npm run build` puis la SPA en dev.
-3. Déplacer `android/`, corriger les deux `capacitor.config` et `sync.sh`,
-   vérifier par un `npm run sync` + `installRelease -PmindlogEnv=qualif`
-   (⚠ jamais un build debug sur le S24 : il forcerait une désinstallation qui
-   efface les données).
-4. Corriger le contexte de build Docker et la CI, redéployer, vérifier en ligne.
-5. Doc et `docs/architecture/clients.md` (tableau d'état).
+**CI** — `mindlog.todo` ne construit plus que l'image API. L'image web est
+publiée par `.github/workflows/build-web.yml` de ce dépôt, sous son propre
+paquet GHCR (`ghcr.io/jacquesh82/mindlog.todo.clients/web`) : republier sous
+`mindlog.todo/web` aurait demandé d'autoriser à la main ce dépôt sur un paquet
+rattaché à un autre. Le compose de prod référence l'image via **`WEB_TAG`**,
+distinct d'`IMAGE_TAG` qui ne tague plus que l'API.
+
+## Vérifié
+
+- `cd web && npm ci && npm run build` — bundle produit, hors de tout workspace.
+- `npm run typecheck` — OK contre les déclarations de `core`.
+- `docker build` du client seul, `VITE_BASE=/app/` — les assets sortent bien en
+  `/app/assets/…`.
+- `cd ../mindlog.todo && npm install && npm run build` — core + server compilent
+  sans le workspace web.
+
+## Reste ouvert
+
+- **Le rollout n'est pas automatisé de bout en bout.** La CI d'ici publie
+  l'image mais ne touche pas à str01 (les secrets SSH sont sur `mindlog.todo`).
+  Mettre à jour le client en prod : `WEB_TAG=<tag> docker compose -f
+  docker-compose.prod.yml up -d web`. À câbler si le va-et-vient devient pénible.
+- **`ios/` reste vide.**
+- **Aucune CI Android** — il n'y en avait pas non plus avant la scission.
