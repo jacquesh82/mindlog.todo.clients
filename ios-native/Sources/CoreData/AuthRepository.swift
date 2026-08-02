@@ -135,10 +135,21 @@ public final class AuthRepository {
         return URL(string: "\(serverStore.baseURL.absoluteString)api/v1/auth/mindlog-id\(query)")
     }
 
-    /// The custom scheme the callback comes back on — the app's bundle
-    /// identifier, exactly as the Android manifest uses its applicationId. A
-    /// prod and a testing install therefore never contend for it.
+    /// The custom scheme the callback comes back on.
+    ///
+    /// Read from `CFBundleURLTypes`, which is the only place that actually
+    /// decides it. Deriving it from `bundleIdentifier` would be the same string
+    /// in an Xcode build — the plist writes `$(PRODUCT_BUNDLE_IDENTIFIER)` — but
+    /// not in a sideloaded one: signing with a free Apple ID rewrites the bundle
+    /// identifier of the installed app, while the scheme baked into the plist at
+    /// build time stays as it was. The two would then disagree, and
+    /// `ASWebAuthenticationSession` would wait for a callback on a scheme the
+    /// app never registered — a sign-in that hangs with nothing to show for it.
     public var callbackScheme: String {
-        Bundle.main.bundleIdentifier ?? "today.mindlog.todo.native"
+        let types = Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]]
+        let schemes = types?.compactMap { $0["CFBundleURLSchemes"] as? [String] }.flatMap(\.self)
+        return schemes?.first
+            ?? Bundle.main.bundleIdentifier
+            ?? "today.mindlog.todo.native"
     }
 }

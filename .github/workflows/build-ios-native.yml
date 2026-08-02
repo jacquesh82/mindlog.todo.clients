@@ -133,16 +133,43 @@ jobs:
             exit 1
           fi
           echo "Application : $APP"
+          PLIST="$APP/Info.plist"
+
+          # Vérifié avant d'empaqueter, parce qu'un .app auquel il manque une de
+          # ces clés se construit sans un mot et refuse de s'installer une fois
+          # sur le téléphone — au bout de la chaîne la plus lente qui soit.
+          # Xcode ne les injecte pas : dès qu'un INFOPLIST_FILE est fourni, le
+          # plist livré est le plist final.
+          for key in CFBundleIdentifier CFBundleExecutable CFBundleName MindlogEnv; do
+            value=$(/usr/libexec/PlistBuddy -c "Print :$key" "$PLIST" 2>/dev/null) || {
+              echo "::error::$key absent de l'Info.plist construit — bundle ininstallable."
+              exit 1
+            }
+            echo "  $key = $value"
+          done
+
+          # Le schéma de rappel OAuth est lu ici à l'exécution par
+          # AuthRepository.callbackScheme ; absent, la connexion mindlog id
+          # attendrait un retour qui n'arrive jamais.
+          SCHEME_URL=$(/usr/libexec/PlistBuddy \
+            -c 'Print :CFBundleURLTypes:0:CFBundleURLSchemes:0' "$PLIST" 2>/dev/null) || {
+            echo "::error::Aucun schéma d'URL enregistré — le retour OAuth serait perdu."
+            exit 1
+          }
+          echo "  schéma de rappel = $SCHEME_URL"
+
+          ENV_BUILT=$(/usr/libexec/PlistBuddy -c 'Print :MindlogEnv' "$PLIST")
+          if [ "$ENV_BUILT" != "$MINDLOG_ENV" ]; then
+            echo "::error::Build demandé pour $MINDLOG_ENV mais le bundle dit $ENV_BUILT."
+            exit 1
+          fi
+
           rm -rf Payload
           mkdir Payload
           cp -R "$APP" Payload/
           zip -qry "MindlogTodo-$MINDLOG_ENV.ipa" Payload
           rm -rf Payload
           ls -lh "MindlogTodo-$MINDLOG_ENV.ipa"
-          # Le nom du bundle et le schéma d'URL enregistré, pour vérifier d'un
-          # coup d'œil que le build vise bien l'environnement demandé.
-          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist"
-          /usr/libexec/PlistBuddy -c 'Print :MindlogEnv' "$APP/Info.plist"
 
       - uses: actions/upload-artifact@v4
         with:

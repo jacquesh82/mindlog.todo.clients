@@ -2,6 +2,25 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Ces six clés ne sont PAS ajoutées par Xcode : il ne les injecte que
+	     lorsqu'il génère lui-même l'Info.plist (GENERATE_INFOPLIST_FILE), ce
+	     qu'il ne fait plus dès qu'un INFOPLIST_FILE est fourni. Sans
+	     CFBundleIdentifier, l'application se construit et ne s'installe pas. -->
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+
 	<key>CFBundleDisplayName</key>
 	<string>$(MINDLOG_APP_NAME)</string>
 	<key>CFBundleShortVersionString</key>
