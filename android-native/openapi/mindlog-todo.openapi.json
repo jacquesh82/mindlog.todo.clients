@@ -2,6 +2,206 @@
   "components": {
     "parameters": {},
     "schemas": {
+      "AiCredits": {
+        "nullable": true,
+        "properties": {
+          "limitTokens": {
+            "type": "integer"
+          },
+          "resetAt": {
+            "type": "string"
+          },
+          "usedTokens": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "usedTokens",
+          "limitTokens",
+          "resetAt"
+        ],
+        "type": "object"
+      },
+      "AiLog": {
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "inputTokens": {
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "ask",
+              "extract_tasks",
+              "summarize",
+              "cleanup_drawing"
+            ],
+            "type": "string"
+          },
+          "model": {
+            "nullable": true,
+            "type": "string"
+          },
+          "outputTokens": {
+            "type": "integer"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "response": {
+            "nullable": true,
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "kind",
+          "model",
+          "prompt",
+          "response",
+          "inputTokens",
+          "outputTokens",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "AiModelList": {
+        "properties": {
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ChatModel"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "models"
+        ],
+        "type": "object"
+      },
+      "AiModelsQueryRequest": {
+        "properties": {
+          "apiKey": {
+            "maxLength": 400,
+            "minLength": 1,
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "anthropic",
+              "openai",
+              "mistral"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "type": "object"
+      },
+      "AiSettings": {
+        "properties": {
+          "cloudHosted": {
+            "type": "boolean"
+          },
+          "credits": {
+            "$ref": "#/components/schemas/AiCredits"
+          },
+          "hasKey": {
+            "type": "boolean"
+          },
+          "model": {
+            "type": "string"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ChatModel"
+            },
+            "type": "array"
+          },
+          "provider": {
+            "enum": [
+              "anthropic",
+              "openai",
+              "mistral"
+            ],
+            "type": "string"
+          },
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/ChatProvider"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "cloudHosted",
+          "provider",
+          "model",
+          "hasKey",
+          "providers",
+          "models",
+          "credits"
+        ],
+        "type": "object"
+      },
+      "AiSettingsUpdateRequest": {
+        "properties": {
+          "apiKey": {
+            "maxLength": 400,
+            "minLength": 1,
+            "type": "string"
+          },
+          "model": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "anthropic",
+              "openai",
+              "mistral"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AiUsage": {
+        "properties": {
+          "calls": {
+            "type": "integer"
+          },
+          "inputTokens": {
+            "type": "integer"
+          },
+          "outputTokens": {
+            "type": "integer"
+          },
+          "totalTokens": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "calls",
+          "inputTokens",
+          "outputTokens",
+          "totalTokens"
+        ],
+        "type": "object"
+      },
       "ApiKey": {
         "properties": {
           "createdAt": {
@@ -168,6 +368,50 @@
         "required": [
           "entity",
           "action"
+        ],
+        "type": "object"
+      },
+      "ChatModel": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "anthropic",
+              "openai",
+              "mistral"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "label"
+        ],
+        "type": "object"
+      },
+      "ChatProvider": {
+        "properties": {
+          "id": {
+            "enum": [
+              "anthropic",
+              "openai",
+              "mistral"
+            ],
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
         ],
         "type": "object"
       },
@@ -971,6 +1215,58 @@
         },
         "type": "object"
       },
+      "PromptSaveRequest": {
+        "properties": {
+          "system": {
+            "maxLength": 20000,
+            "type": "string"
+          },
+          "user": {
+            "maxLength": 20000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "system",
+          "user"
+        ],
+        "type": "object"
+      },
+      "PromptView": {
+        "properties": {
+          "isCustom": {
+            "type": "boolean"
+          },
+          "key": {
+            "enum": [
+              "ask",
+              "extract_tasks",
+              "summarize"
+            ],
+            "type": "string"
+          },
+          "placeholders": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "system": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "system",
+          "user",
+          "key",
+          "isCustom",
+          "placeholders"
+        ],
+        "type": "object"
+      },
       "RefreshRequest": {
         "properties": {
           "refreshToken": {
@@ -1662,6 +1958,407 @@
   },
   "openapi": "3.0.3",
   "paths": {
+    "/api/v1/ai/logs": {
+      "get": {
+        "parameters": [
+          {
+            "description": "Default 50, max 200.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "description": "Default 50, max 200.",
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AiLog"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Recent generative calls, most recent first",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/models": {
+      "post": {
+        "description": "POST rather than GET because the request may carry an API key, which has no place in a URL.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiModelsQueryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiModelList"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List a provider's models live",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/prompts": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromptView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Effective prompts, with whether each overrides the seed",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/prompts/reset": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromptView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Drop every override at once",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/prompts/seed/export": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromptView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Write the current prompts to the server-side seed file",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/prompts/seed/import": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromptView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Reload the prompts from the server-side seed file",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/prompts/{key}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "enum": [
+                "ask",
+                "extract_tasks",
+                "summarize"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Unknown prompt key"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Drop the override and fall back to the seed value",
+        "tags": [
+          "ai"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "enum": [
+                "ask",
+                "extract_tasks",
+                "summarize"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptSaveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Unknown prompt key"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/settings": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettings"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      },
+      "patch": {
+        "description": "The key is write-only: it never appears in a response, `hasKey` reports its presence.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiSettingsUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettings"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Set provider, model, and/or the user's own API key",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/settings/key": {
+      "delete": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettings"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Forget the stored API key",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/usage": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiUsage"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/api-keys": {
       "get": {
         "responses": {

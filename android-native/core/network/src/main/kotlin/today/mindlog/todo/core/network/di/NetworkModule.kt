@@ -13,6 +13,7 @@ import today.mindlog.todo.core.network.AuthInterceptor
 import today.mindlog.todo.core.network.BaseUrlInterceptor
 import today.mindlog.todo.core.network.TokenAuthenticator
 import today.mindlog.todo.core.network.api.AuthApi
+import today.mindlog.todo.core.network.api.AiApi
 import today.mindlog.todo.core.network.api.NotesApi
 import today.mindlog.todo.core.network.api.TodoApi
 import java.util.concurrent.TimeUnit
@@ -91,4 +92,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun notesApi(@ApiClient retrofit: Retrofit): NotesApi = retrofit.create(NotesApi::class.java)
+
+    @Provides
+    @Singleton
+    fun aiApi(@ApiClient retrofit: Retrofit): AiApi = retrofit.create(AiApi::class.java)
 }

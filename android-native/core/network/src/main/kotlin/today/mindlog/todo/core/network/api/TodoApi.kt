@@ -19,7 +19,11 @@ import today.mindlog.todo.core.network.model.ProjectUpdateRequest
 import today.mindlog.todo.core.network.model.Section
 import today.mindlog.todo.core.network.model.SectionCreateRequest
 import today.mindlog.todo.core.network.model.SectionUpdateRequest
+import today.mindlog.todo.core.network.model.AskResult
 import today.mindlog.todo.core.network.model.Task
+import today.mindlog.todo.core.network.model.TaskAskRequest
+import today.mindlog.todo.core.network.model.TaskSearchHit
+import today.mindlog.todo.core.network.model.TaskSearchRequest
 import today.mindlog.todo.core.network.model.TaskCreateRequest
 import today.mindlog.todo.core.network.model.TaskQuickAddRequest
 import today.mindlog.todo.core.network.model.TaskUpdateRequest
@@ -71,6 +75,18 @@ interface TodoApi {
 
     @DELETE("api/v1/tasks/{id}")
     suspend fun deleteTask(@Path("id") id: String)
+
+    /** Recherche sémantique sur les tâches ; le score est porté par le hit. */
+    @POST("api/v1/tasks/search")
+    suspend fun searchTasks(@Body body: TaskSearchRequest): List<TaskSearchHit>
+
+    /**
+     * Question en langue naturelle. La réponse cite les tâches qui l'ont
+     * fondée : elles sont rendues telles quelles, pas résumées, pour que
+     * l'utilisateur puisse vérifier ce sur quoi le modèle s'appuie.
+     */
+    @POST("api/v1/tasks/ask")
+    suspend fun ask(@Body body: TaskAskRequest): AskResult
 
     // --- projects ---
 

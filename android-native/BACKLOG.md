@@ -53,7 +53,7 @@ de chaque itération et mis à jour à la fin.
 ### T3 — Recherche et IA
 
 - [x] Contrat : `ai` documenté — **12 routes** (prompts, usage, logs, réglages, modèles), 73 endpoints publiés, test vert
-- [ ] DTO + `AiApi` + `AiRepository`
+- [x] DTO générés + `AiApi` (12 routes) + `AiRepository` + recherche/ask de tâches dans `TodoApi`
 - [ ] Écrans : recherche, « Ask AI », réglages IA (BYOK)
 - [ ] Recette S24
 
@@ -124,3 +124,10 @@ de chaque itération et mis à jour à la fin.
   Le contrat énonce deux invariants qui n'étaient écrits nulle part : la clé
   d'API est en écriture seule, et `/ai/models` est un POST parce que la requête
   peut porter une clé.
+- 2026-08-02 — T3 (2/4) : `AiApi`, `AiRepository`, et les deux routes de
+  recherche/ask de tâches ajoutées à `TodoApi`. Client natif à **61 endpoints**.
+  Contrat corrigé une seconde fois pour le nommage : `AiSettings` est désormais
+  composé de parties nommées (`AiCredits`, `ChatProvider`, `ChatModel`) au lieu
+  de produire des `AiSettingsProvidersInner`. Le dépôt interroge tâches ET notes
+  en parallèle et tolère l'échec d'un seul corpus — la moitié des résultats vaut
+  mieux que rien, à condition que l'écran le dise. Reste : les écrans.
