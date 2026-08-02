@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Same amber the web client uses for the todo brand. -->
+    <color name="splash_background">#edba6e</color>
+    <color name="ic_launcher_background">#edba6e</color>
+</resources>

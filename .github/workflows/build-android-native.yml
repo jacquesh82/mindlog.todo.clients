@@ -1,0 +1,63 @@
+name: Build android-native
+
+# Construit le client Android natif. Ce workflow ne publie rien : il prouve que
+# le dépôt compile, que les tests passent et que le lint est propre, et dépose
+# l'APK de qualif en artefact pour installation manuelle. La publication Play
+# viendra avec la signature, qui n'est pas encore en place.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'android-native/**'
+      - '.github/workflows/build-android-native.yml'
+  pull_request:
+    paths:
+      - 'android-native/**'
+
+concurrency:
+  group: build-android-native-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-native
+    steps:
+      - uses: actions/checkout@v4
+
+      # AGP refuse un JDK inférieur à 17 ; les scripts locaux forcent 21, on
+      # s'aligne pour que la CI compile avec la même chaîne.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      # Met aussi en cache le JAR openapi-generator, téléchargé par la tâche
+      # generateApiModels.
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Le Kotlin des DTO n'est pas versionné : il se régénère ici depuis
+      # `openapi/mindlog-todo.openapi.json`, qui l'est. Une CI verte prouve donc
+      # que le snapshot committé est exploitable, pas seulement présent.
+      - name: Assemble, test et lint
+        run: ./gradlew -PmindlogEnv=qualif assembleDebug testDebugUnitTest lintDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-qualif-debug
+          path: android-native/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Rapport de lint en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: android-native/app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore

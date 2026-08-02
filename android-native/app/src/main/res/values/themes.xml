@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose draws the real UI; these only cover the window before the
+         first frame. Amber matches the todo brand, so the launch does not
+         flash a different colour. -->
+    <style name="Theme.MindlogTodo" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.MindlogTodo.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="postSplashScreenTheme">@style/Theme.MindlogTodo</item>
+    </style>
+</resources>
