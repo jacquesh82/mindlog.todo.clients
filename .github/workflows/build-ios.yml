@@ -112,6 +112,35 @@ jobs:
             echo "::error::Aucun index.html embarqué — cap sync n'a rien copié."; exit 1; }
           echo "  assets web          = $(find /tmp/ipacheck/Payload/App.app/public -type f | wc -l) fichiers"
 
+          # Deux bundles imbriqués ne peuvent pas porter le même identifiant :
+          # installd refuse le paquet avec `DuplicateIdentifier`. Le piège est
+          # qu'un réglage passé à xcodebuild en ligne de commande s'applique à
+          # toutes les cibles, Pods compris — les frameworks Capacitor héritent
+          # alors de l'identifiant de l'application. Rien ne le signale avant
+          # l'installation sur l'appareil, d'où ce contrôle ici.
+          python3 - <<'PY'
+          import collections, pathlib, plistlib, sys
+
+          root = pathlib.Path("/tmp/ipacheck/Payload/App.app")
+          seen = collections.defaultdict(list)
+          for plist in sorted(root.rglob("Info.plist")):
+              try:
+                  data = plistlib.loads(plist.read_bytes())
+              except Exception:
+                  continue
+              identifier = data.get("CFBundleIdentifier")
+              if identifier:
+                  seen[identifier].append(str(plist.relative_to(root)))
+
+          duplicates = {k: v for k, v in seen.items() if len(v) > 1}
+          for identifier, paths in sorted(seen.items()):
+              print(f"  {identifier} <- {', '.join(paths)}")
+          if duplicates:
+              for identifier, paths in duplicates.items():
+                  print(f"::error::Identifiant en double : {identifier} porté par {len(paths)} bundles ({', '.join(paths)})")
+              sys.exit(1)
+          PY
+
       - uses: actions/upload-artifact@v4
         with:
           name: ipa-shell-${{ inputs.environment || 'qualif' }}-unsigned

@@ -6,10 +6,17 @@
 #   bash scripts/xcode.sh ipa        # + empaquetage .ipa
 #
 # Jumeau de ../../android/scripts/gradle.sh, et comme lui il décide de l'identité
-# de la variante d'après MINDLOG_ENV. La différence est qu'Android lit
-# `-PmindlogEnv` dans son build.gradle, alors qu'ici les trois valeurs sont
-# passées en réglages de build : le projet est généré par Capacitor et ne doit
-# pas être édité à la main, sous peine d'être écrasé au prochain `cap add`.
+# de la variante d'après MINDLOG_ENV. Android lit `-PmindlogEnv` dans son
+# build.gradle ; ici les valeurs passent par trois réglages de build MINDLOG_*,
+# que la cible App référence dans son project.pbxproj.
+#
+# Ce détour n'est pas cosmétique. Un réglage passé à `xcodebuild` en ligne de
+# commande s'applique à TOUTES les cibles du workspace, Pods compris : écraser
+# PRODUCT_BUNDLE_IDENTIFIER directement donnait l'identifiant de l'application
+# aux trois frameworks Capacitor embarqués, et l'installation échouait sur
+# `DuplicateIdentifier` — après le build, après la signature, sur l'appareil.
+# Les variables MINDLOG_* n'étant référencées que par la cible App, les Pods
+# gardent les identifiants que CocoaPods leur donne.
 #
 # macOS uniquement — xcodebuild n'existe nulle part ailleurs. Le build de CI
 # fait exactement la même chose sur un runner macOS.
@@ -66,9 +73,9 @@ xcodebuild build \
   -sdk iphoneos \
   -derivedDataPath build \
   ONLY_ACTIVE_ARCH=NO \
-  PRODUCT_BUNDLE_IDENTIFIER="$APP_ID" \
+  MINDLOG_APP_ID="$APP_ID" \
   MINDLOG_APP_NAME="$APP_NAME" \
-  MARKETING_VERSION="$VERSION" \
+  MINDLOG_APP_VERSION="$VERSION" \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGN_IDENTITY="" \
