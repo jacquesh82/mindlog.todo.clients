@@ -13,6 +13,7 @@ dependencies {
     implementation(projects.core.designsystem)
     implementation(projects.core.data)
     implementation(projects.feature.auth)
+    implementation(projects.feature.notes)
     implementation(projects.feature.tasks)
 
     implementation(libs.androidx.core.ktx)

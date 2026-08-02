@@ -52,7 +52,10 @@ import today.mindlog.todo.core.network.model.Task
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TasksScreen(viewModel: TasksViewModel = hiltViewModel()) {
+fun TasksScreen(
+    onOpenNotes: () -> Unit = {},
+    viewModel: TasksViewModel = hiltViewModel(),
+) {
     val state by viewModel.tasks.collectAsStateWithLifecycle()
     val quickAdd by viewModel.quickAdd.collectAsStateWithLifecycle()
     val navigation by viewModel.navigation.collectAsStateWithLifecycle()
@@ -67,6 +70,10 @@ fun TasksScreen(viewModel: TasksViewModel = hiltViewModel()) {
             NavigationDrawerContent(
                 state = navigation,
                 selected = view,
+                onOpenNotes = {
+                    scope.launch { drawerState.close() }
+                    onOpenNotes()
+                },
                 onSelect = { selection ->
                     viewModel.select(selection)
                     // Refermer fait partie de la sélection : la liste est

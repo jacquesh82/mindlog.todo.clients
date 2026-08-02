@@ -36,6 +36,7 @@ include(":core:network")
 include(":core:data")
 include(":feature:auth")
 include(":feature:tasks")
+include(":feature:notes")
 
 // Not split out yet, on purpose. A module earns its existence when two modules
 // consume it or its build configuration genuinely differs:

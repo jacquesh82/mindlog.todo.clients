@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Inbox
@@ -44,6 +45,7 @@ fun NavigationDrawerContent(
     state: NavigationState,
     selected: TaskView,
     onSelect: (TaskView) -> Unit,
+    onOpenNotes: () -> Unit = {},
 ) {
     ModalDrawerSheet {
         LazyColumn(contentPadding = PaddingValues(vertical = 12.dp)) {
@@ -72,6 +74,19 @@ fun NavigationDrawerContent(
                     count = null,
                     selected = selected is TaskView.All,
                     onClick = { onSelect(TaskView.All) },
+                )
+            }
+
+            // Les notes ne sont pas une vue de tâches : l'entrée quitte cet
+            // écran au lieu de changer la sélection, d'où l'absence d'état
+            // « sélectionné ».
+            item {
+                DrawerEntry(
+                    label = "Notes",
+                    icon = Icons.AutoMirrored.Filled.MenuBook,
+                    count = null,
+                    selected = false,
+                    onClick = onOpenNotes,
                 )
             }
 

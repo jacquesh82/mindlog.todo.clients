@@ -14,8 +14,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import today.mindlog.todo.feature.auth.LoginScreen
+import today.mindlog.todo.feature.notes.NotebooksScreen
+import today.mindlog.todo.feature.notes.PageEditorScreen
+import today.mindlog.todo.feature.notes.PagesScreen
 import today.mindlog.todo.feature.tasks.TasksScreen
 
 // Type-safe routes rather than strings: a renamed destination becomes a
@@ -23,6 +27,9 @@ import today.mindlog.todo.feature.tasks.TasksScreen
 @Serializable private data object Splash
 @Serializable private data object Login
 @Serializable private data object Tasks
+@Serializable private data object Notebooks
+@Serializable private data class Pages(val notebookId: String, val notebookName: String)
+@Serializable private data class PageEditor(val pageId: String)
 
 @Composable
 fun MindlogTodoApp(viewModel: AppViewModel = hiltViewModel()) {
@@ -47,7 +54,28 @@ fun MindlogTodoApp(viewModel: AppViewModel = hiltViewModel()) {
                 }
             }
             composable<Login> { LoginScreen() }
-            composable<Tasks> { TasksScreen() }
+            composable<Tasks> { TasksScreen(onOpenNotes = { navController.navigate(Notebooks) }) }
+            composable<Notebooks> {
+                NotebooksScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenNotebook = { id, name -> navController.navigate(Pages(id, name)) },
+                )
+            }
+            composable<Pages> { entry ->
+                val route = entry.toRoute<Pages>()
+                PagesScreen(
+                    notebookId = route.notebookId,
+                    notebookName = route.notebookName,
+                    onBack = { navController.popBackStack() },
+                    onOpenPage = { navController.navigate(PageEditor(it)) },
+                )
+            }
+            composable<PageEditor> { entry ->
+                PageEditorScreen(
+                    pageId = entry.toRoute<PageEditor>().pageId,
+                    onBack = { navController.popBackStack() },
+                )
+            }
         }
     }
 }

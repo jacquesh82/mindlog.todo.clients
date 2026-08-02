@@ -44,7 +44,7 @@ de chaque itération et mis à jour à la fin.
 
 - [x] Contrat : `notes` documenté — **15 routes** (et non 10 : le web n'en appelle pas la moitié), 61 endpoints publiés, test vert
 - [x] DTO générés + `NotesApi` (15 routes) + `NotesRepository`
-- [ ] Écrans : liste des carnets, liste des pages, éditeur
+- [x] Écrans : carnets, pages, éditeur (module `feature/notes`) + entrée « Notes » dans le tiroir
 - [ ] Recette S24
 
 ### T3 — Recherche et IA
@@ -101,3 +101,13 @@ de chaque itération et mis à jour à la fin.
   contenu des pages n'est jamais mis en cache (plusieurs Mo par page possibles).
   Contrat corrigé au passage : `DrawShape` est nommé, sinon le générateur
   produisait `DrawCleanupRequestShapesInner`. Reste : les écrans.
+- 2026-08-02 — T2 (3/4) : module `feature/notes` — trois écrans et leur
+  navigation typée. **Décision de format** : le contenu d'une page est un
+  document `{ mode, boxes, markdown }` ; le natif n'édite QUE le markdown et
+  reconduit `boxes` à l'identique. Sans ça, ouvrir puis sauver depuis le
+  téléphone effacerait un canevas construit sur le web, sans erreur. Une page en
+  mode `blocks` s'ouvre donc en LECTURE, avec la raison affichée à l'écran, et
+  le mode n'est jamais basculé — le passer en `raw` ferait disparaître les
+  boîtes de la vue web alors qu'elles existent encore. Sauvegarde explicite et
+  non à la frappe : chaque PATCH renvoie la page entière. `:app:assembleDebug`
+  vert. Reste de T2 : la recette S24.
