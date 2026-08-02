@@ -275,6 +275,27 @@
         ],
         "type": "object"
       },
+      "AskNoteSource": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "notebookId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "notebookId"
+        ],
+        "type": "object"
+      },
       "AskResult": {
         "properties": {
           "answer": {
@@ -282,25 +303,7 @@
           },
           "noteSources": {
             "items": {
-              "properties": {
-                "id": {
-                  "format": "uuid",
-                  "type": "string"
-                },
-                "notebookId": {
-                  "format": "uuid",
-                  "type": "string"
-                },
-                "title": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "title",
-                "notebookId"
-              ],
-              "type": "object"
+              "$ref": "#/components/schemas/AskNoteSource"
             },
             "type": "array"
           },
@@ -314,6 +317,25 @@
         "required": [
           "answer",
           "sources"
+        ],
+        "type": "object"
+      },
+      "AuthProviders": {
+        "properties": {
+          "google": {
+            "type": "boolean"
+          },
+          "mindlogId": {
+            "type": "boolean"
+          },
+          "passwordReset": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mindlogId",
+          "google",
+          "passwordReset"
         ],
         "type": "object"
       },
@@ -338,6 +360,116 @@
           "expiresIn",
           "user"
         ],
+        "type": "object"
+      },
+      "CalendarEvent": {
+        "properties": {
+          "allDay": {
+            "type": "boolean"
+          },
+          "end": {
+            "nullable": true,
+            "type": "string"
+          },
+          "start": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "uid",
+          "summary",
+          "start",
+          "end",
+          "allDay"
+        ],
+        "type": "object"
+      },
+      "CalendarSource": {
+        "properties": {
+          "color": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastSyncedAt": {
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "name",
+          "url",
+          "color",
+          "lastSyncedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "CalendarSourceCreateRequest": {
+        "properties": {
+          "color": {
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "url"
+        ],
+        "type": "object"
+      },
+      "CalendarSourceUpdateRequest": {
+        "properties": {
+          "color": {
+            "nullable": true,
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "url": {
+            "format": "uri",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "ChangeEvent": {
@@ -430,6 +562,143 @@
         "required": [
           "pendingToken",
           "email"
+        ],
+        "type": "object"
+      },
+      "DashboardNoteStats": {
+        "properties": {
+          "notebooks": {
+            "type": "integer"
+          },
+          "pages": {
+            "type": "integer"
+          },
+          "ragPages": {
+            "type": "integer"
+          },
+          "storageBytes": {
+            "type": "integer"
+          },
+          "storageQuota": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "notebooks",
+          "pages",
+          "ragPages",
+          "storageBytes",
+          "storageQuota"
+        ],
+        "type": "object"
+      },
+      "DashboardPriorityCounts": {
+        "properties": {
+          "p1": {
+            "type": "integer"
+          },
+          "p2": {
+            "type": "integer"
+          },
+          "p3": {
+            "type": "integer"
+          },
+          "p4": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ],
+        "type": "object"
+      },
+      "DashboardStats": {
+        "properties": {
+          "completedTrend": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardTrendPoint"
+            },
+            "type": "array"
+          },
+          "karma": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Karma"
+              },
+              {
+                "nullable": true
+              }
+            ]
+          },
+          "notes": {
+            "$ref": "#/components/schemas/DashboardNoteStats"
+          },
+          "tasks": {
+            "$ref": "#/components/schemas/DashboardTaskStats"
+          }
+        },
+        "required": [
+          "tasks",
+          "notes",
+          "completedTrend",
+          "karma"
+        ],
+        "type": "object"
+      },
+      "DashboardTaskStats": {
+        "properties": {
+          "active": {
+            "type": "integer"
+          },
+          "byPriority": {
+            "$ref": "#/components/schemas/DashboardPriorityCounts"
+          },
+          "completed": {
+            "type": "integer"
+          },
+          "completedThisWeek": {
+            "type": "integer"
+          },
+          "completionRate": {
+            "type": "number"
+          },
+          "dueToday": {
+            "type": "integer"
+          },
+          "overdue": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "active",
+          "completed",
+          "overdue",
+          "dueToday",
+          "completedThisWeek",
+          "completionRate",
+          "byPriority"
+        ],
+        "type": "object"
+      },
+      "DashboardTrendPoint": {
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "count"
         ],
         "type": "object"
       },
@@ -657,6 +926,43 @@
         ],
         "type": "object"
       },
+      "Karma": {
+        "properties": {
+          "completedThisWeek": {
+            "type": "integer"
+          },
+          "completedToday": {
+            "type": "integer"
+          },
+          "level": {
+            "type": "string"
+          },
+          "nextLevel": {
+            "nullable": true,
+            "type": "string"
+          },
+          "points": {
+            "type": "integer"
+          },
+          "pointsToNext": {
+            "nullable": true,
+            "type": "integer"
+          },
+          "streakDays": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "points",
+          "level",
+          "nextLevel",
+          "pointsToNext",
+          "completedToday",
+          "completedThisWeek",
+          "streakDays"
+        ],
+        "type": "object"
+      },
       "Label": {
         "properties": {
           "color": {
@@ -749,6 +1055,21 @@
         "required": [
           "email",
           "password"
+        ],
+        "type": "object"
+      },
+      "MindlogIdConnection": {
+        "properties": {
+          "agendaGranted": {
+            "type": "boolean"
+          },
+          "connected": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "connected",
+          "agendaGranted"
         ],
         "type": "object"
       },
@@ -1906,23 +2227,7 @@
       "VersionInfo": {
         "properties": {
           "authProviders": {
-            "properties": {
-              "google": {
-                "type": "boolean"
-              },
-              "mindlogId": {
-                "type": "boolean"
-              },
-              "passwordReset": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "mindlogId",
-              "google",
-              "passwordReset"
-            ],
-            "type": "object"
+            "$ref": "#/components/schemas/AuthProviders"
           },
           "buildDate": {
             "type": "string"
@@ -2722,6 +3027,255 @@
         ]
       }
     },
+    "/api/v1/calendar/events": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CalendarEvent"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Events merged from every feed, optionally bounded",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
+    "/api/v1/calendar/mindlog-id": {
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "Unlinked"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Unlink the mindlog id account",
+        "tags": [
+          "calendar"
+        ]
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MindlogIdConnection"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Whether the mindlog id account is linked and granted the agenda scope",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
+    "/api/v1/calendar/sources": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CalendarSource"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "calendar"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarSourceCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarSource"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Subscribe to an iCal feed",
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
+    "/api/v1/calendar/sources/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "calendar"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarSourceUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarSource"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "calendar"
+        ]
+      }
+    },
+    "/api/v1/dashboard": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardStats"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Aggregated task and note counters, plus a 14-day completion trend",
+        "tags": [
+          "stats"
+        ]
+      }
+    },
     "/api/v1/events": {
       "get": {
         "description": "Each `data:` frame is a ChangeEvent — an **invalidation signal, not a delta**. It says what kind of thing changed, never what it became, so clients re-read. There is no `changedSince` cursor and no tombstone. The stream opens with `retry: 3000` and sends a `: ping` comment every 25s. Note that `EventSource` cannot carry an `Authorization` header — read the body as a stream instead.",
@@ -2971,6 +3525,31 @@
         "summary": "Run a saved filter and return the matching tasks",
         "tags": [
           "filters"
+        ]
+      }
+    },
+    "/api/v1/karma": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Karma"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Points, level, streak",
+        "tags": [
+          "stats"
         ]
       }
     },

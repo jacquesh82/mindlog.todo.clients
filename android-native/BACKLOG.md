@@ -60,7 +60,7 @@ de chaque itération et mis à jour à la fin.
 ### T4 — Calendrier, karma, tableau de bord
 
 - [x] Contrat : `calendar` (7 routes), `karma`, `dashboard` — **82 endpoints publiés**, test vert
-- [ ] DTO + API + dépôts
+- [x] DTO générés + `CalendarApi` (9 routes, calendrier + karma + dashboard) + `CalendarRepository`
 - [ ] Écrans : sources de calendrier, événements, karma, tableau de bord
 - [ ] Recette S24
 
@@ -149,3 +149,14 @@ de chaque itération et mis à jour à la fin.
 - 2026-08-02 — Recette T3 non faite : téléphone verrouillé. **Trois recettes en
   attente** (T1, T2, T3). L'écart entre « compile » et « fonctionne » ne se
   réduit pas ; c'est le risque principal du plan de charge à ce stade.
+- 2026-08-02 — T4 (2/3) : `CalendarApi` et `CalendarRepository`. Client natif à
+  **70 endpoints**. **Ma vérification anti-`Inner` de l'itération précédente
+  était fausse** : je cherchais des noms suspects dans les composants du
+  document, or le générateur invente ces noms PARCE QUE les schémas sont inline
+  — ils ne peuvent donc pas y figurer. Le bon contrôle parcourt les schémas à la
+  recherche d'objets imbriqués sans `$ref`. Il a révélé quatre blocs du tableau
+  de bord, plus `VersionInfo.authProviders` et `AskResult.noteSources` qui
+  traînaient depuis l'origine. Tous nommés : **plus aucun objet inline** dans les
+  74 schémas. Les événements sont demandés sur une fenêtre explicite (28 jours),
+  et l'URL d'un abonnement iCal est convertie en `URI` dans le dépôt — une
+  adresse mal formée échoue avant l'aller-retour.
