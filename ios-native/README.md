@@ -66,6 +66,45 @@ debug. La release utilise `App/Info.plist` et donc le défaut de la plateforme,
 HTTPS uniquement. Même arrangement que le `networkSecurityConfig` cantonné à
 `app/src/debug/` côté Android.
 
+## Installer sur un appareil
+
+Le binaire vient de la CI, la signature reste locale. Ce n'est pas un partage
+des tâches arbitraire : un certificat d'Apple ID gratuit expire au bout de sept
+jours et son obtention demande une authentification à deux facteurs
+interactive — rien de tout cela ne tient dans un runner.
+
+```sh
+# 1. le .ipa non signé du dernier build vert
+gh run download -n ipa-qualif-unsigned -D ~/Downloads/mindlog-ipa
+
+# 2. l'appareil répond
+idevicepair validate
+
+# 3. signature + installation
+iloader          # interface graphique : Apple ID, puis « install IPA »
+```
+
+Côté machine : `usbmuxd` (service actif) et `iloader` (AUR : `iloader-bin`).
+`ideviceinstaller` ne suffirait pas — il installe, il ne signe pas.
+
+Côté téléphone : le **mode développeur** (Réglages ▸ Confidentialité et
+sécurité ▸ Mode développeur), puis, après la première installation, faire
+confiance au certificat dans Réglages ▸ Général ▸ VPN et gestion de l'appareil.
+
+Ce qu'un Apple ID gratuit impose, et qui ne se contourne pas :
+
+- l'application **expire au bout de 7 jours** et doit être réinstallée ;
+- **3 applications** sideloadées au maximum sur l'appareil ;
+- 10 identifiants d'application par semaine.
+
+> ⚠️ iloader **réécrit l'identifiant de bundle** pour qu'il appartienne au
+> compte qui signe. Le schéma d'URL, lui, est figé dans l'Info.plist au moment
+> du build et ne change pas : c'est pourquoi `AuthRepository.callbackScheme` le
+> lit dans `CFBundleURLTypes` plutôt que de le déduire de `bundleIdentifier`.
+> Pour que la connexion mindlog id revienne, le serveur doit avoir
+> `NATIVE_CALLBACK_URL` réglé sur ce schéma —
+> `today.mindlog.todo.native.testing://auth/callback` pour un build de qualif.
+
 ## Contrat d'API
 
 Le service expose sa spécification OpenAPI ; elle fait foi. Les DTO Swift en
