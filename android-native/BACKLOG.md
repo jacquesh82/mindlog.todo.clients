@@ -62,11 +62,11 @@ de chaque itération et mis à jour à la fin.
 - [x] Contrat : `calendar` (7 routes), `karma`, `dashboard` — **82 endpoints publiés**, test vert
 - [x] DTO générés + `CalendarApi` (9 routes, calendrier + karma + dashboard) + `CalendarRepository`
 - [x] Écrans : calendrier (événements + abonnements + rattachement) et tableau de bord (karma inclus)
-- [ ] Recette S24
+- [~] Recette S24 — NON faite : appareil injoignable (`No route to host`)
 
 ### T5 — Reste de la surface
 
-- [ ] Contrat : `attachments`, `storage`, `export`, `oauth`
+- [x] Contrat : `attachments`, `storage`, `export` — **88 endpoints, tous les routeurs montés sont couverts** (sauf `oauth`, voir journal)
 - [ ] Clés d'API et réglages de compte (le contrat les couvre déjà)
 - [ ] Pagination des tâches (aujourd'hui `limit=200`, au-delà des tâches manquent en silence)
 - [ ] Recette S24
@@ -168,3 +168,18 @@ de chaque itération et mis à jour à la fin.
   le second, aucun événement n'en vient, et le dire évite de chercher la panne
   ailleurs. Tendance sur 14 jours en barres de texte : une dépendance de tracé
   pour quatorze valeurs serait payer cher une courbe. T4 close côté code.
+- 2026-08-02 — T5 (1/4) : contrat des pièces jointes, du stockage et de l'export
+  (88 endpoints, commit `482391e`). `content` d'une pièce jointe reste un champ
+  OPTIONNEL : mon premier jet le scindait en deux schémas, ce qui cassait le
+  dépôt qui lit `.content` — le modèle d'origine était le bon. L'export garde un
+  corps libre à dessein : figer sa forme gèlerait un format de sauvegarde qui
+  doit rester exhaustif.
+  **Garde ajoutée au test de contrat** : tout objet imbriqué sans `$ref` fait
+  échouer `openapi.test.ts`. C'est le défaut corrigé trois fois à la main, à
+  chaque fois découvert dans le Kotlin généré. Vérifié par contre-épreuve —
+  remettre `byPriority` inline fait bien tomber le test.
+  `oauth` (consentement MCP) reste hors contrat : ce sont des pages de
+  redirection navigateur, pas une API que le client natif appellerait.
+- 2026-08-02 — Recette T4 impossible : le S24 n'est plus joignable du tout
+  (`No route to host`), adb sans fil coupé ou téléphone hors réseau.
+  **Quatre recettes en attente.**
