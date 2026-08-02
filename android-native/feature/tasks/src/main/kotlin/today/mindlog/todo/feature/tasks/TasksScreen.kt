@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -37,7 +38,10 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
@@ -154,10 +158,32 @@ fun TasksScreen(
                             style = MaterialTheme.typography.bodyLarge,
                         )
                     } else {
-                        LazyColumn(Modifier.fillMaxSize()) {
+                        val listState = rememberLazyListState()
+
+                        // Charge la suite quand les cinq dernières lignes
+                        // entrent dans le champ : attendre la toute dernière
+                        // ferait attendre l'utilisateur devant un vide.
+                        val atEnd by remember(current.tasks.size) {
+                            derivedStateOf {
+                                val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                                last >= current.tasks.size - 5
+                            }
+                        }
+                        LaunchedEffect(atEnd, current.hasMore) {
+                            if (atEnd && current.hasMore) viewModel.loadMore()
+                        }
+
+                        LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                             items(current.tasks, key = { it.id }) { task ->
                                 TaskRow(task, onComplete = { viewModel.setDone(task.id) })
                                 HorizontalDivider()
+                            }
+                            if (current.loadingMore) {
+                                item {
+                                    Box(Modifier.fillMaxWidth().padding(16.dp), Alignment.Center) {
+                                        CircularProgressIndicator(Modifier.size(24.dp))
+                                    }
+                                }
                             }
                         }
                     }

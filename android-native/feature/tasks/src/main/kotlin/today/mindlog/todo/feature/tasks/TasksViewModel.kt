@@ -48,6 +48,9 @@ class TasksViewModel @Inject constructor(
 
     fun refresh() = viewModelScope.launch { taskRepository.refresh() }
 
+    /** Page suivante ; le dépôt ignore l'appel si une page est déjà en vol. */
+    fun loadMore() = taskRepository.loadMore()
+
     fun setDone(id: String) = viewModelScope.launch { taskRepository.setDone(id, done = true) }
 
     fun showQuickAdd() = _quickAdd.update { QuickAddState(visible = true) }

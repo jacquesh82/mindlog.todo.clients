@@ -44,9 +44,10 @@ interface TodoApi {
     // --- tasks ---
 
     /**
-     * `limit` defaults to 50 server-side and caps at 200. Milestone 1 asks for
-     * the maximum and does not paginate; the day a user has more than two
-     * hundred open tasks, that becomes a real gap rather than a hidden one.
+     * `limit` plafonne à 200 côté serveur, `offset` ouvre la suite. Les deux
+     * sont désormais explicites : demander le maximum sans paginer faisait
+     * disparaître les tâches au-delà de la deux-centième SANS que rien ne le
+     * signale — une liste fausse qui a l'air juste.
      */
     @GET("api/v1/tasks")
     suspend fun listTasks(
@@ -56,7 +57,8 @@ interface TodoApi {
         @Query("labelId") labelId: String? = null,
         /** ISO instant. `Today` is expressed as "due before tomorrow", so it includes overdue. */
         @Query("dueBefore") dueBefore: String? = null,
-        @Query("limit") limit: Int = 200,
+        @Query("limit") limit: Int = 50,
+        @Query("offset") offset: Int = 0,
     ): List<Task>
 
     @POST("api/v1/tasks")

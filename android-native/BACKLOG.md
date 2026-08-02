@@ -68,7 +68,7 @@ de chaque itération et mis à jour à la fin.
 
 - [x] Contrat : `attachments`, `storage`, `export` — **88 endpoints, tous les routeurs montés sont couverts** (sauf `oauth`, voir journal)
 - [x] Compte : profil, clés d'API, occupation disque, export (+ pièces jointes câblées, sans écran)
-- [ ] Pagination des tâches (aujourd'hui `limit=200`, au-delà des tâches manquent en silence)
+- [x] Pagination des tâches — pages de 50, chargement au défilement, `hasMore` explicite
 - [ ] Recette S24
 
 ## Journal
@@ -192,3 +192,15 @@ de chaque itération et mis à jour à la fin.
   **Les pièces jointes sont câblées mais AUCUN écran ne les consomme** : il
   faudrait une vue de détail de tâche, qui n'existe pas dans ce client et n'est
   pas au plan. Signalé dans le dépôt plutôt que laissé croire au support complet.
+- 2026-08-02 — T5 (3/4) : pagination. Pages de 50, chargées au défilement cinq
+  lignes avant la fin. `hasMore` déduit d'une page pleine — l'API ne rend pas de
+  total, mais c'est assez pour ne pas s'arrêter en silence. Un rechargement
+  (flux d'événements) redemande AUTANT de tâches que l'utilisateur en avait
+  déroulé, plafonné à 200 : repartir d'une page le renverrait en haut de sa
+  liste à chaque changement. Une vue enregistrée n'est pas paginable —
+  `GET /filters/{id}/tasks` rend tout — et `hasMore` reste donc faux. Une page
+  qui échoue laisse la liste en place plutôt que de la vider.
+  `README.md` mis à jour : la pagination et les domaines livrés sortent de la
+  liste « ce qui n'est pas implémenté ».
+  **Le plan de charge n'a plus de tâche de code.** Reste la recette, impossible
+  tant que le S24 est hors réseau.

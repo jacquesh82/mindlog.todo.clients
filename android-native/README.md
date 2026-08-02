@@ -102,10 +102,9 @@ absent :
   supprimer une seule requête. C'est l'**écriture** hors-ligne qui la
   justifierait — et elle demande d'abord une réponse serveur pour les
   suppressions.
-- **Pagination.** La liste demande `limit=200`, le maximum accepté. Au-delà, des
-  tâches manquent silencieusement.
-- **Projets, sections, étiquettes, filtres** : lus par l'API, pas encore affichés.
-- **Notes, recherche sémantique, calendrier, karma, pièces jointes, réglages.**
+- **Pièces jointes** : l'API est câblée, mais aucun écran ne les affiche — il
+  faudrait une vue de détail de tâche, qui n'existe pas encore.
+- **Export** : copié dans le presse-papier, faute de sélecteur de fichier.
 - **Google** comme fournisseur d'identité (mindlog id et mot de passe seulement).
 - **i18n** : les libellés sont en anglais, en dur. Le web tient deux
   dictionnaires plats dans `web/src/i18n.tsx` ; les reprendre suppose de les

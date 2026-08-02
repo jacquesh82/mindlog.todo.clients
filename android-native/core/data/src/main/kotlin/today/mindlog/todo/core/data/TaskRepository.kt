@@ -28,7 +28,20 @@ import javax.inject.Singleton
 
 sealed interface TasksState {
     data object Loading : TasksState
-    data class Ready(val tasks: List<Task>) : TasksState
+
+    /**
+     * @param hasMore une page pleine est revenue : il reste probablement des
+     *   tâches. C'est la seule information dont on dispose — l'API ne rend pas
+     *   de total — mais elle suffit à ne pas s'arrêter en silence.
+     * @param loadingMore une page suivante est en vol ; l'écran l'annonce au
+     *   lieu de laisser croire que la liste est finie.
+     */
+    data class Ready(
+        val tasks: List<Task>,
+        val hasMore: Boolean = false,
+        val loadingMore: Boolean = false,
+    ) : TasksState
+
     data class Failed(val cause: Throwable) : TasksState
 }
 
@@ -103,24 +116,79 @@ class TaskRepository @Inject constructor(
         scope.launch { refresh() }
     }
 
+    /**
+     * Recharge depuis le début — mais en redemandant AUTANT de tâches que
+     * l'utilisateur en avait déjà déroulé, dans la limite du maximum serveur.
+     * Repartir d'une seule page le renverrait en haut de sa liste à chaque
+     * événement du flux ; au-delà de 200 chargées, la queue est refaite au
+     * défilement, ce que `hasMore` signale.
+     */
     suspend fun refresh() {
         if (sessionStore.accessToken() == null) return
-        _state.value = runCatching { load(_view.value) }
-            .fold({ TasksState.Ready(it) }, { TasksState.Failed(it) })
+        val loaded = (_state.value as? TasksState.Ready)?.tasks?.size ?: 0
+        val want = loaded.coerceAtLeast(PAGE).coerceAtMost(MAX_PAGE)
+        _state.value = runCatching { load(_view.value, limit = want, offset = 0) }
+            .fold(
+                { TasksState.Ready(it, hasMore = paginable(_view.value) && it.size >= want) },
+                { TasksState.Failed(it) },
+            )
     }
 
-    private suspend fun load(view: TaskView): List<Task> = when (view) {
+    /**
+     * Page suivante, ajoutée à la liste courante. Sans effet si une page est
+     * déjà en vol : un défilement rapide déclencherait sinon plusieurs fois la
+     * même requête et dupliquerait des lignes.
+     */
+    fun loadMore() {
+        val current = _state.value as? TasksState.Ready ?: return
+        if (!current.hasMore || current.loadingMore) return
+        _state.value = current.copy(loadingMore = true)
+        scope.launch {
+            val offset = current.tasks.size
+            runCatching { load(_view.value, limit = PAGE, offset = offset) }.fold(
+                { page ->
+                    _state.value = TasksState.Ready(
+                        tasks = current.tasks + page,
+                        hasMore = page.size >= PAGE,
+                    )
+                },
+                {
+                    // On garde ce qui est affiché : perdre la liste entière
+                    // parce qu'une page a échoué serait plus punitif que le
+                    // défaut lui-même.
+                    _state.value = current.copy(loadingMore = false)
+                },
+            )
+        }
+    }
+
+    /**
+     * Une vue enregistrée n'est pas paginable : `GET /filters/{id}/tasks`
+     * exécute la requête et rend tout. Prétendre le contraire ferait défiler
+     * l'écran vers une page qui n'existe pas.
+     */
+    private fun paginable(view: TaskView): Boolean = view !is TaskView.Filter
+
+    private suspend fun load(view: TaskView, limit: Int, offset: Int): List<Task> = when (view) {
         // `root = true` n'est demandé que sur les vues d'ensemble : dans un
         // projet ou un filtre, une sous-tâche dont le parent vit ailleurs doit
         // rester visible, sinon elle disparaît de la seule vue qui la contient.
-        TaskView.Today -> api.listTasks(completed = false, root = true, dueBefore = tomorrow())
-        TaskView.All -> api.listTasks(completed = false, root = true)
+        TaskView.Today -> api.listTasks(
+            completed = false, root = true, dueBefore = tomorrow(), limit = limit, offset = offset,
+        )
+
+        TaskView.All -> api.listTasks(completed = false, root = true, limit = limit, offset = offset)
         TaskView.Inbox -> inboxProjectId()
-            ?.let { api.listTasks(completed = false, projectId = it) }
+            ?.let { api.listTasks(completed = false, projectId = it, limit = limit, offset = offset) }
             .orEmpty()
 
-        is TaskView.Project -> api.listTasks(completed = false, projectId = view.id)
-        is TaskView.Label -> api.listTasks(completed = false, labelId = view.id)
+        is TaskView.Project ->
+            api.listTasks(completed = false, projectId = view.id, limit = limit, offset = offset)
+
+        is TaskView.Label ->
+            api.listTasks(completed = false, labelId = view.id, limit = limit, offset = offset)
+
+        // Pas de pagination ici : le serveur exécute le filtre et rend tout.
         is TaskView.Filter -> api.runFilter(view.id)
     }
 
@@ -181,5 +249,11 @@ class TaskRepository @Inject constructor(
 
     private companion object {
         const val DEBOUNCE_MS = 300L
+
+        /** Taille d'une page — le défaut du serveur. */
+        const val PAGE = 50
+
+        /** Plafond imposé par l'API sur une seule requête. */
+        const val MAX_PAGE = 200
     }
 }
