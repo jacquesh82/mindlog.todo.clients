@@ -22,6 +22,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Retour d'autorisation mindlog id. Le consentement se déroule dans
+                 le navigateur système (une autre origine que le bundle local ne
+                 peut pas rendre les jetons à la WebView) ; l'API redirige ensuite
+                 vers ce schéma, qui SUIT l'applicationId — `today.mindlog.todo`
+                 en prod, `.testing` ailleurs — pour que les deux variantes
+                 installées côte à côte ne se disputent pas le deep link.
+                 `custom_url_scheme` est défini dans app/build.gradle ; sans ce
+                 filtre il n'était déclaré nulle part et le retour se perdait. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="@string/custom_url_scheme" />
+            </intent-filter>
+
         </activity>
 
         <provider
