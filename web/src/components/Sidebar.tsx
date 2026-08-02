@@ -165,7 +165,7 @@ export function Sidebar({ projects, labels, filters, karma, counts, view, onSele
     // rendered below aren't trapped in a transformed containing block). From
     // `md` up it reverts to the classic static, always-visible sidebar.
     <aside
-      className={`fixed inset-y-0 z-40 flex h-full w-[min(18rem,85vw)] shrink-0 flex-col border-r border-line bg-sidebar transition-[left] duration-200 ease-out md:static md:left-auto md:z-auto md:w-64 ${
+      className={`app-insets-drawer fixed inset-y-0 z-40 flex h-full w-[min(18rem,85vw)] shrink-0 flex-col border-r border-line bg-sidebar transition-[left] duration-200 ease-out md:static md:left-auto md:z-auto md:w-64 ${
         open ? 'left-0' : '-left-full'
       }`}
     >

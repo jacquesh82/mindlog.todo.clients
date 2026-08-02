@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { api, setTokens } from '../api/client';
 import type { User } from '../types';
+import { onDeepLink } from '../native';
 
 interface AuthState {
   user: User | null;
@@ -37,25 +38,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // OAuth redirect returns either tokens or, for mindlog id without an email, a
+  // pending token in the URL fragment. Same payload on both platforms: the web
+  // gets it in `location.hash`, the Android shell in the deep link that reopens
+  // the app — hence one reader for the two.
+  function consumeAuthFragment(fragment: string): 'tokens' | 'pending' | null {
+    const p = new URLSearchParams(fragment.replace(/^#/, ''));
+    const access = p.get('access_token');
+    const refresh = p.get('refresh_token');
+    if (access && refresh) {
+      setTokens(access, refresh);
+      return 'tokens';
+    }
+    const pending = p.get('mindlog_id_pending');
+    if (pending) {
+      setPendingToken(pending);
+      return 'pending';
+    }
+    return null;
+  }
+
   useEffect(() => {
-    void (async () => {
-      // OAuth redirect returns either tokens or, for mindlog id without an email,
-      // a pending token in the URL fragment.
-      if (window.location.hash.includes('access_token')) {
-        const p = new URLSearchParams(window.location.hash.slice(1));
-        const access = p.get('access_token');
-        const refresh = p.get('refresh_token');
-        if (access && refresh) setTokens(access, refresh);
-        window.history.replaceState({}, '', window.location.pathname);
-        await loadUser();
+    // Coquille native : le consentement se déroule dans le navigateur système,
+    // l'app est rouverte par son schéma custom. Il n'y a donc AUCUNE navigation
+    // web au retour et `location.hash` est vide au démarrage — sans cet écouteur
+    // les jetons n'atteignent jamais l'app. No-op dans un navigateur.
+    onDeepLink((url) => {
+      const hash = url.indexOf('#');
+      if (hash < 0) return;
+      void (async () => {
+        if (consumeAuthFragment(url.slice(hash + 1)) === 'tokens') await loadUser();
         setLoading(false);
-        return;
-      }
-      if (window.location.hash.includes('mindlog_id_pending')) {
-        const p = new URLSearchParams(window.location.hash.slice(1));
-        const token = p.get('mindlog_id_pending');
+      })();
+    });
+
+    void (async () => {
+      const kind = consumeAuthFragment(window.location.hash);
+      if (kind) {
         window.history.replaceState({}, '', window.location.pathname);
-        if (token) setPendingToken(token);
+        if (kind === 'tokens') await loadUser();
         setLoading(false);
         return;
       }

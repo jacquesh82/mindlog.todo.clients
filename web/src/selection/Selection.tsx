@@ -112,45 +112,45 @@ export function SelectionBar({ tasks, onReload }: { tasks: Task[]; onReload: () 
   }
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-8 z-[950] flex justify-center px-4">
-      <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-brand-hover bg-brand px-3 py-2 text-sm text-white shadow-2xl ring-1 ring-black/10">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(2rem+var(--android-inset-bottom,env(safe-area-inset-bottom,0px)))] z-[950] flex justify-center px-4">
+      <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-brand-hover bg-brand px-3 py-2 text-sm text-brand-ink shadow-2xl ring-1 ring-black/10">
         <span className="px-2 font-semibold">{t('select.count', { n: selectedTasks.length })}</span>
         <button
           onClick={() => void set(tasks.map((task) => task.id))}
-          className="rounded-full px-2.5 py-1 text-white/85 hover:bg-white/20 hover:text-white"
+          className="rounded-full px-2.5 py-1 text-brand-ink/85 hover:bg-brand-ink/15 hover:text-brand-ink"
         >
           {t('select.all')}
         </button>
-        <span className="mx-1 h-5 w-px bg-white/30" />
+        <span className="mx-1 h-5 w-px bg-brand-ink/30" />
         <button
           onClick={() => void applyStatus(() => 'done')}
-          className="rounded-full px-2.5 py-1 font-medium hover:bg-white/20"
+          className="rounded-full px-2.5 py-1 font-medium hover:bg-brand-ink/15"
         >
           ✓ {t('select.check')}
         </button>
         <button
           onClick={() => void applyStatus(() => 'todo')}
-          className="rounded-full px-2.5 py-1 hover:bg-white/20"
+          className="rounded-full px-2.5 py-1 hover:bg-brand-ink/15"
         >
           ○ {t('select.uncheck')}
         </button>
         <button
           onClick={() => void applyStatus((task) => (task.status === 'done' ? 'todo' : 'done'))}
-          className="rounded-full px-2.5 py-1 hover:bg-white/20"
+          className="rounded-full px-2.5 py-1 hover:bg-brand-ink/15"
         >
           ⇄ {t('select.toggle')}
         </button>
         <button
           onClick={() => void removeAll()}
-          className="rounded-full px-2.5 py-1 hover:bg-white/25"
+          className="rounded-full px-2.5 py-1 hover:bg-brand-ink/20"
         >
           🗑 {t('task.delete')}
         </button>
-        <span className="mx-1 h-5 w-px bg-white/30" />
+        <span className="mx-1 h-5 w-px bg-brand-ink/30" />
         <button
           onClick={() => clear()}
           title={t('select.clear')}
-          className="rounded-full px-2.5 py-1 text-white/85 hover:bg-white/20 hover:text-white"
+          className="rounded-full px-2.5 py-1 text-brand-ink/85 hover:bg-brand-ink/15 hover:text-brand-ink"
         >
           ✕
         </button>

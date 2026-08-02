@@ -30,8 +30,29 @@ export function maybeStartTour(t: Translate): void {
   setTimeout(() => startTour(t), 400);
 }
 
+/**
+ * Is the anchor actually ON SCREEN?
+ *
+ * Below `md` the sidebar is a `fixed` off-canvas drawer (it only turns `static`
+ * from 768px up), so its `[data-tour]` elements still EXIST — with a rectangle
+ * sitting outside the viewport. Shepherd faithfully pins the bubble next to it
+ * and the step lands off-screen. An unanchored step is centred instead, which
+ * is what a drawer-based layout wants anyway.
+ */
+function anchorOnScreen(selector: string): boolean {
+  const el = document.querySelector(selector);
+  if (!el) return false;
+  const r = el.getBoundingClientRect();
+  if (r.width === 0 || r.height === 0) return false;
+  // Horizontal only: vertical overflow is handled by `scrollTo`, off-canvas is not.
+  return r.right > 0 && r.left < window.innerWidth;
+}
+
 /** Start (or replay) the guided tour. */
 export function startTour(t: Translate): void {
+  // Le tiroir est fermé sous 768px (cf. Sidebar.tsx) : aucune ancre n'y est
+  // atteignable, on centre toutes les étapes.
+  const narrow = window.matchMedia('(max-width: 767px)').matches;
   const tour = new Shepherd.Tour({
     useModalOverlay: true,
     defaultStepOptions: {
@@ -60,11 +81,12 @@ export function startTour(t: Translate): void {
   ];
 
   for (const s of steps) {
+    const anchored = !narrow && anchorOnScreen(s.el);
     tour.addStep({
       id: s.id,
       title: t(`tour.${s.id}.title`),
       text: t(`tour.${s.id}.text`),
-      attachTo: { element: s.el, on: s.on },
+      ...(anchored ? { attachTo: { element: s.el, on: s.on } } : {}),
       buttons: buttons(s.last),
     });
   }

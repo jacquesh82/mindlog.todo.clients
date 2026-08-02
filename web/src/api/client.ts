@@ -29,6 +29,7 @@ import type {
   User,
   VersionInfo,
 } from '../types';
+import { isNativeShell } from '../native';
 
 export const API: string = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 const REFRESH_KEY = 'mindlog_refresh';
@@ -172,8 +173,22 @@ export const api = {
   googleUrl(): string {
     return `${API}/api/v1/auth/google`;
   },
-  mindlogIdUrl(): string {
-    return `${API}/api/v1/auth/mindlog-id`;
+  /**
+   * `create`: pressed from the "create an account" block. mindlog id then opens
+   * its signup screen directly instead of the consent screen — one screen less
+   * on the only path where the intent is already known.
+   */
+  mindlogIdUrl(create = false): string {
+    const q = new URLSearchParams();
+    if (create) q.set('create', '1');
+    // Coquille Capacitor : le bundle est servi depuis `https://localhost`, donc
+    // l'URL de retour web appartient à une AUTRE origine et les jetons y seraient
+    // perdus. `client=native` demande le retour par le schéma custom de l'app,
+    // que le serveur lit dans le `state` (seul paramètre qui survit au détour
+    // par l'IdP) et jamais dans la requête — sinon ce serait un open redirect.
+    if (isNativeShell()) q.set('client', 'native');
+    const qs = q.toString();
+    return `${API}/api/v1/auth/mindlog-id${qs ? `?${qs}` : ''}`;
   },
   /** Finish a mindlog-id sign-in when the IdP returned no email (user typed one). */
   async completeMindlogId(pendingToken: string, email: string): Promise<AuthResult> {

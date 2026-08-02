@@ -155,7 +155,7 @@ export function App() {
   const inboxId = projects.find((p) => p.isInbox)?.id;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface text-ink">
+    <div className="app-insets flex h-screen overflow-hidden bg-surface text-ink">
       {/* Scrim: dims and closes the drawer on phones. Absent from `md` up. */}
       {drawerOpen && (
         <div
@@ -326,7 +326,7 @@ function MobileTabBar({
     },
   ];
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 flex h-16 items-stretch border-t border-line bg-sidebar pb-[env(safe-area-inset-bottom)] md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-20 flex h-16 items-stretch border-t border-line bg-sidebar app-insets-bottom md:hidden">
       {tabs.map((tab) => (
         <button
           key={tab.key}
