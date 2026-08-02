@@ -185,6 +185,12 @@ est absent :
   tâches manquent silencieusement.
 - **Création et modification** de projets, sections, étiquettes et filtres : les
   méthodes existent sur `NavigationRepository`, aucun écran ne les appelle.
+- **Notes** (carnets, pages, éditeur) et **couche IA** (recherche sémantique,
+  ask, réglages de modèle). Le client Android les a — `feature/notes`,
+  `AiRepository`, `NotesRepository` — et pas celui-ci : le portage a été fait à
+  partir de l'état antérieur à ces écrans. Les DTO correspondants sont pourtant
+  déjà générés ici, le snapshot OpenAPI étant commun ; il manque les appels et
+  les vues. C'est le premier écart à combler, et le plus gros.
 - **Notes, recherche sémantique, calendrier, karma, pièces jointes, réglages.**
 - **Google** comme fournisseur d'identité (mindlog id et mot de passe seulement).
 - **i18n** : les libellés sont en anglais, en dur — même état que le client

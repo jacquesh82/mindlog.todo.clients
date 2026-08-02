@@ -2,6 +2,206 @@
   "components": {
     "parameters": {},
     "schemas": {
+      "AiCredits": {
+        "nullable": true,
+        "properties": {
+          "limitTokens": {
+            "type": "integer"
+          },
+          "resetAt": {
+            "type": "string"
+          },
+          "usedTokens": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "usedTokens",
+          "limitTokens",
+          "resetAt"
+        ],
+        "type": "object"
+      },
+      "AiLog": {
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "inputTokens": {
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "ask",
+              "extract_tasks",
+              "summarize",
+              "cleanup_drawing"
+            ],
+            "type": "string"
+          },
+          "model": {
+            "nullable": true,
+            "type": "string"
+          },
+          "outputTokens": {
+            "type": "integer"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "response": {
+            "nullable": true,
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "kind",
+          "model",
+          "prompt",
+          "response",
+          "inputTokens",
+          "outputTokens",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "AiModelList": {
+        "properties": {
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ChatModel"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "models"
+        ],
+        "type": "object"
+      },
+      "AiModelsQueryRequest": {
+        "properties": {
+          "apiKey": {
+            "maxLength": 400,
+            "minLength": 1,
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "anthropic",
+              "openai",
+              "mistral"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "type": "object"
+      },
+      "AiSettings": {
+        "properties": {
+          "cloudHosted": {
+            "type": "boolean"
+          },
+          "credits": {
+            "$ref": "#/components/schemas/AiCredits"
+          },
+          "hasKey": {
+            "type": "boolean"
+          },
+          "model": {
+            "type": "string"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ChatModel"
+            },
+            "type": "array"
+          },
+          "provider": {
+            "enum": [
+              "anthropic",
+              "openai",
+              "mistral"
+            ],
+            "type": "string"
+          },
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/ChatProvider"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "cloudHosted",
+          "provider",
+          "model",
+          "hasKey",
+          "providers",
+          "models",
+          "credits"
+        ],
+        "type": "object"
+      },
+      "AiSettingsUpdateRequest": {
+        "properties": {
+          "apiKey": {
+            "maxLength": 400,
+            "minLength": 1,
+            "type": "string"
+          },
+          "model": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "anthropic",
+              "openai",
+              "mistral"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AiUsage": {
+        "properties": {
+          "calls": {
+            "type": "integer"
+          },
+          "inputTokens": {
+            "type": "integer"
+          },
+          "outputTokens": {
+            "type": "integer"
+          },
+          "totalTokens": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "calls",
+          "inputTokens",
+          "outputTokens",
+          "totalTokens"
+        ],
+        "type": "object"
+      },
       "ApiKey": {
         "properties": {
           "createdAt": {
@@ -171,6 +371,50 @@
         ],
         "type": "object"
       },
+      "ChatModel": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "anthropic",
+              "openai",
+              "mistral"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "label"
+        ],
+        "type": "object"
+      },
+      "ChatProvider": {
+        "properties": {
+          "id": {
+            "enum": [
+              "anthropic",
+              "openai",
+              "mistral"
+            ],
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "type": "object"
+      },
       "CompleteMindlogIdRequest": {
         "properties": {
           "email": {
@@ -186,6 +430,89 @@
         "required": [
           "pendingToken",
           "email"
+        ],
+        "type": "object"
+      },
+      "DrawCleanupRequest": {
+        "properties": {
+          "height": {
+            "exclusiveMinimum": true,
+            "maximum": 4000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "instruction": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "shapes": {
+            "items": {
+              "$ref": "#/components/schemas/DrawShape"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "width": {
+            "exclusiveMinimum": true,
+            "maximum": 4000,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "shapes",
+          "width",
+          "height"
+        ],
+        "type": "object"
+      },
+      "DrawCleanupResult": {
+        "properties": {
+          "svg": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "svg"
+        ],
+        "type": "object"
+      },
+      "DrawShape": {
+        "properties": {
+          "fill": {
+            "type": "string"
+          },
+          "fillStyle": {
+            "type": "string"
+          },
+          "h": {
+            "type": "number"
+          },
+          "stroke": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "w": {
+            "type": "number"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "x",
+          "y",
+          "w",
+          "h"
         ],
         "type": "object"
       },
@@ -207,6 +534,20 @@
         "required": [
           "error",
           "message"
+        ],
+        "type": "object"
+      },
+      "ExtractedTasks": {
+        "properties": {
+          "tasks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "tasks"
         ],
         "type": "object"
       },
@@ -411,6 +752,313 @@
         ],
         "type": "object"
       },
+      "NotePage": {
+        "properties": {
+          "color": {
+            "nullable": true,
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "inRag": {
+            "type": "boolean"
+          },
+          "notebookId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "position": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "notebookId",
+          "userId",
+          "title",
+          "position",
+          "inRag",
+          "color",
+          "createdAt",
+          "updatedAt",
+          "content"
+        ],
+        "type": "object"
+      },
+      "NotePageHit": {
+        "properties": {
+          "color": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "inRag": {
+            "type": "boolean"
+          },
+          "notebookId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "position": {
+            "type": "integer"
+          },
+          "score": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "notebookId",
+          "userId",
+          "title",
+          "position",
+          "inRag",
+          "color",
+          "createdAt",
+          "updatedAt",
+          "score"
+        ],
+        "type": "object"
+      },
+      "NotePageSummary": {
+        "properties": {
+          "color": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "inRag": {
+            "type": "boolean"
+          },
+          "notebookId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "position": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "notebookId",
+          "userId",
+          "title",
+          "position",
+          "inRag",
+          "color",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "NoteSearchRequest": {
+        "properties": {
+          "k": {
+            "description": "Default 10, max 50.",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "notebookIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "query": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "Notebook": {
+        "properties": {
+          "color": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "name",
+          "color",
+          "position",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "NotebookCreateRequest": {
+        "properties": {
+          "color": {
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "NotebookRagRequest": {
+        "properties": {
+          "inRag": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "inRag"
+        ],
+        "type": "object"
+      },
+      "NotebookRagResult": {
+        "properties": {
+          "updated": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "updated"
+        ],
+        "type": "object"
+      },
+      "NotebookUpdateRequest": {
+        "properties": {
+          "color": {
+            "nullable": true,
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PageCreateRequest": {
+        "properties": {
+          "content": {
+            "maxLength": 12000000,
+            "type": "string"
+          },
+          "inRag": {
+            "type": "boolean"
+          },
+          "title": {
+            "maxLength": 300,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PageUpdateRequest": {
+        "properties": {
+          "color": {
+            "nullable": true,
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "type": "string"
+          },
+          "content": {
+            "maxLength": 12000000,
+            "type": "string"
+          },
+          "inRag": {
+            "type": "boolean"
+          },
+          "position": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 300,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ProfileUpdateRequest": {
         "properties": {
           "avatarUrl": {
@@ -565,6 +1213,58 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "PromptSaveRequest": {
+        "properties": {
+          "system": {
+            "maxLength": 20000,
+            "type": "string"
+          },
+          "user": {
+            "maxLength": 20000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "system",
+          "user"
+        ],
+        "type": "object"
+      },
+      "PromptView": {
+        "properties": {
+          "isCustom": {
+            "type": "boolean"
+          },
+          "key": {
+            "enum": [
+              "ask",
+              "extract_tasks",
+              "summarize"
+            ],
+            "type": "string"
+          },
+          "placeholders": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "system": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "system",
+          "user",
+          "key",
+          "isCustom",
+          "placeholders"
+        ],
         "type": "object"
       },
       "RefreshRequest": {
@@ -1258,6 +1958,407 @@
   },
   "openapi": "3.0.3",
   "paths": {
+    "/api/v1/ai/logs": {
+      "get": {
+        "parameters": [
+          {
+            "description": "Default 50, max 200.",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "description": "Default 50, max 200.",
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AiLog"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Recent generative calls, most recent first",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/models": {
+      "post": {
+        "description": "POST rather than GET because the request may carry an API key, which has no place in a URL.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiModelsQueryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiModelList"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List a provider's models live",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/prompts": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromptView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Effective prompts, with whether each overrides the seed",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/prompts/reset": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromptView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Drop every override at once",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/prompts/seed/export": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromptView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Write the current prompts to the server-side seed file",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/prompts/seed/import": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromptView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Reload the prompts from the server-side seed file",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/prompts/{key}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "enum": [
+                "ask",
+                "extract_tasks",
+                "summarize"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Unknown prompt key"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Drop the override and fall back to the seed value",
+        "tags": [
+          "ai"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "enum": [
+                "ask",
+                "extract_tasks",
+                "summarize"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptSaveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromptView"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Unknown prompt key"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/settings": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettings"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      },
+      "patch": {
+        "description": "The key is write-only: it never appears in a response, `hasKey` reports its presence.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiSettingsUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettings"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Set provider, model, and/or the user's own API key",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/settings/key": {
+      "delete": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettings"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Forget the stored API key",
+        "tags": [
+          "ai"
+        ]
+      }
+    },
+    "/api/v1/ai/usage": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiUsage"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "ai"
+        ]
+      }
+    },
     "/api/v1/api-keys": {
       "get": {
         "responses": {
@@ -2103,6 +3204,621 @@
         ],
         "tags": [
           "account"
+        ]
+      }
+    },
+    "/api/v1/notes/draw/cleanup": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DrawCleanupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DrawCleanupResult"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Redraw a rough sketch as a clean SVG (AI)",
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/v1/notes/notebooks": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Notebook"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "notes"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotebookCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              }
+            },
+            "description": "Created"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/v1/notes/notebooks/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "notes"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotebookUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notebook"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/v1/notes/notebooks/{id}/pages": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NotePageSummary"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Pages of a notebook, without their content",
+        "tags": [
+          "notes"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PageCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotePage"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/v1/notes/notebooks/{id}/rag": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotebookRagRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotebookRagResult"
+                }
+              }
+            },
+            "description": "Pages updated"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Add or remove every page of a notebook from the semantic index",
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/v1/notes/notebooks/{id}/summarize": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotePage"
+                }
+              }
+            },
+            "description": "Summary page created"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Summarize a whole notebook into a new page (AI)",
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/v1/notes/pages/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "notes"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotePage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "One page, with its content",
+        "tags": [
+          "notes"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PageUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotePage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/v1/notes/pages/{id}/duplicate": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotePage"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/v1/notes/pages/{id}/extract-tasks": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractedTasks"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Propose tasks found in a page (AI, preview only — nothing is created)",
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/v1/notes/search": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteSearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NotePageHit"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Semantic search over RAG-enabled pages",
+        "tags": [
+          "notes"
         ]
       }
     },
