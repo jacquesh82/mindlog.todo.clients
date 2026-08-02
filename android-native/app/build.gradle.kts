@@ -14,6 +14,7 @@ dependencies {
     implementation(projects.core.data)
     implementation(projects.feature.auth)
     implementation(projects.feature.ai)
+    implementation(projects.feature.calendar)
     implementation(projects.feature.notes)
     implementation(projects.feature.tasks)
 

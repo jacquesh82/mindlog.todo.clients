@@ -61,7 +61,7 @@ de chaque itération et mis à jour à la fin.
 
 - [x] Contrat : `calendar` (7 routes), `karma`, `dashboard` — **82 endpoints publiés**, test vert
 - [x] DTO générés + `CalendarApi` (9 routes, calendrier + karma + dashboard) + `CalendarRepository`
-- [ ] Écrans : sources de calendrier, événements, karma, tableau de bord
+- [x] Écrans : calendrier (événements + abonnements + rattachement) et tableau de bord (karma inclus)
 - [ ] Recette S24
 
 ### T5 — Reste de la surface
@@ -160,3 +160,11 @@ de chaque itération et mis à jour à la fin.
   74 schémas. Les événements sont demandés sur une fenêtre explicite (28 jours),
   et l'URL d'un abonnement iCal est convertie en `URI` dans le dépôt — une
   adresse mal formée échoue avant l'aller-retour.
+- 2026-08-02 — T4 (3/3) : module `feature/calendar` — deux écrans, deux entrées
+  de tiroir de plus. Le karma est lu DANS le tableau de bord au lieu d'un second
+  appel : `/dashboard` le porte déjà. Une entrée « journée entière » n'affiche
+  pas d'heure — montrer minuit ferait croire à un rendez-vous nocturne. Le
+  rattachement mindlog id distingue « lié » de « droit agenda accordé » : sans
+  le second, aucun événement n'en vient, et le dire évite de chercher la panne
+  ailleurs. Tendance sur 14 jours en barres de texte : une dépendance de tracé
+  pour quatorze valeurs serait payer cher une courbe. T4 close côté code.

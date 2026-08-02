@@ -56,6 +56,8 @@ fun TasksScreen(
     onOpenNotes: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenAsk: () -> Unit = {},
+    onOpenCalendar: () -> Unit = {},
+    onOpenDashboard: () -> Unit = {},
     viewModel: TasksViewModel = hiltViewModel(),
 ) {
     val state by viewModel.tasks.collectAsStateWithLifecycle()
@@ -83,6 +85,14 @@ fun TasksScreen(
                 onOpenAsk = {
                     scope.launch { drawerState.close() }
                     onOpenAsk()
+                },
+                onOpenCalendar = {
+                    scope.launch { drawerState.close() }
+                    onOpenCalendar()
+                },
+                onOpenDashboard = {
+                    scope.launch { drawerState.close() }
+                    onOpenDashboard()
                 },
                 onSelect = { selection ->
                     viewModel.select(selection)

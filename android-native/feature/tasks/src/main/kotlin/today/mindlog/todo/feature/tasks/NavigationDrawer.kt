@@ -12,6 +12,8 @@ import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Inbox
@@ -50,6 +52,8 @@ fun NavigationDrawerContent(
     onOpenNotes: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
     onOpenAsk: () -> Unit = {},
+    onOpenCalendar: () -> Unit = {},
+    onOpenDashboard: () -> Unit = {},
 ) {
     ModalDrawerSheet {
         LazyColumn(contentPadding = PaddingValues(vertical = 12.dp)) {
@@ -110,6 +114,25 @@ fun NavigationDrawerContent(
                     count = null,
                     selected = false,
                     onClick = onOpenAsk,
+                )
+            }
+
+            item {
+                DrawerEntry(
+                    label = "Calendar",
+                    icon = Icons.Default.Event,
+                    count = null,
+                    selected = false,
+                    onClick = onOpenCalendar,
+                )
+            }
+            item {
+                DrawerEntry(
+                    label = "Dashboard",
+                    icon = Icons.Default.Insights,
+                    count = null,
+                    selected = false,
+                    onClick = onOpenDashboard,
                 )
             }
 
