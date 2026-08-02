@@ -1,0 +1,119 @@
+name: Build ios
+
+# Construit la coquille Capacitor iOS et dépose un .ipa **non signé** en
+# artefact. Pendant exact de `build-android-native.yml` pour l'APK : ce workflow
+# ne publie rien, il prouve que la coquille se construit et fournit de quoi
+# installer à la main.
+#
+# Non signé, comme `build-ios-native.yml` et pour la même raison : un certificat
+# d'Apple ID gratuit expire en sept jours et son obtention demande une
+# authentification à deux facteurs interactive. iloader signe et installe depuis
+# le poste.
+#
+# À la différence des clients `-native`, il n'y a ici aucun code applicatif à
+# compiler : ce qui est construit, c'est le client web, empaqueté dans une
+# WebView. Une régression fonctionnelle se corrige donc dans `web/`, jamais ici.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Déploiement visé par le build
+        type: choice
+        options:
+          - qualif
+          - prod
+          - local
+        default: qualif
+  push:
+    branches:
+      - main
+    paths:
+      - 'ios/**'
+      - 'web/**'
+      - '.github/workflows/build-ios.yml'
+  pull_request:
+    paths:
+      - 'ios/**'
+      - 'web/**'
+
+concurrency:
+  group: build-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    env:
+      MINDLOG_ENV: ${{ inputs.environment || 'qualif' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Deux installations distinctes : `web/` porte la SPA que sync.sh
+      # reconstruit, `ios/` porte la CLI Capacitor et le plugin @capacitor/app.
+      - name: Dépendances
+        run: |
+          npm ci --prefix web
+          npm ci --prefix ios
+
+      # sync.sh fait tout : build Vite avec le VITE_API_URL de l'environnement,
+      # puis `cap sync ios`, qui recopie dist/ dans App/App/public, régénère le
+      # Podfile et lance pod install (CocoaPods est préinstallé sur le runner).
+      - name: Synchronise le client web dans l'app
+        run: bash ios/scripts/sync.sh
+
+      - name: Construit et empaquette
+        run: bash ios/scripts/xcode.sh ipa
+
+      # Les mêmes vérifications que pour le client natif, et pour la même raison :
+      # un bundle auquel il manque une de ces clés se construit sans un mot et
+      # échoue une fois sur le téléphone. Le schéma d'URL est le plus fragile —
+      # c'est lui qui ramène le retour de connexion mindlog id, et son absence ne
+      # se voit qu'au moment de se connecter.
+      - name: Vérifie le bundle produit
+        run: |
+          IPA="ios/mindlog-todo-$MINDLOG_ENV.ipa"
+          rm -rf /tmp/ipacheck && mkdir -p /tmp/ipacheck
+          unzip -q "$IPA" -d /tmp/ipacheck
+          PLIST=/tmp/ipacheck/Payload/App.app/Info.plist
+
+          if [ "$MINDLOG_ENV" = "prod" ]; then
+            EXPECTED_ID="today.mindlog.todo"
+          else
+            EXPECTED_ID="today.mindlog.todo.testing"
+          fi
+
+          ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PLIST")
+          NAME=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$PLIST")
+          SCHEME=$(/usr/libexec/PlistBuddy \
+            -c 'Print :CFBundleURLTypes:0:CFBundleURLSchemes:0' "$PLIST" 2>/dev/null) || {
+            echo "::error::Aucun schéma d'URL enregistré — le retour OAuth serait perdu."
+            exit 1
+          }
+          echo "  CFBundleIdentifier  = $ID"
+          echo "  CFBundleDisplayName = $NAME"
+          echo "  schéma de rappel    = $SCHEME"
+
+          [ "$ID" = "$EXPECTED_ID" ] || {
+            echo "::error::Identifiant attendu $EXPECTED_ID, obtenu $ID."; exit 1; }
+          [ "$SCHEME" = "$EXPECTED_ID" ] || {
+            echo "::error::Le schéma doit suivre l'identifiant ($EXPECTED_ID), obtenu $SCHEME."; exit 1; }
+          case "$NAME" in
+            *'$('*) echo "::error::CFBundleDisplayName non substitué : $NAME"; exit 1 ;;
+          esac
+
+          # La SPA est-elle bien embarquée, et sur le bon serveur ?
+          test -f /tmp/ipacheck/Payload/App.app/public/index.html || {
+            echo "::error::Aucun index.html embarqué — cap sync n'a rien copié."; exit 1; }
+          echo "  assets web          = $(find /tmp/ipacheck/Payload/App.app/public -type f | wc -l) fichiers"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipa-shell-${{ inputs.environment || 'qualif' }}-unsigned
+          path: ios/mindlog-todo-*.ipa
+          if-no-files-found: error

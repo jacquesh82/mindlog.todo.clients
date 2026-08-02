@@ -6,15 +6,16 @@ gestionnaire de tâches avec API REST et serveur MCP. Un dossier par plateforme.
 ```
 web/             SPA React + Vite — client REST de l'API todo
 android/         coquille Capacitor embarquant web/
-ios/             coquille Capacitor embarquant web/       (vide)
+ios/             coquille Capacitor embarquant web/
 android-native/  implémentation Kotlin / Compose
 ios-native/      implémentation Swift / SwiftUI
 ```
 
-`web/` porte l'interface et la logique ; `android/` n'embarque aucun code
-applicatif — sa `webDir` pointe sur `../web/dist`, et `npm run sync` reconstruit
-la SPA puis lance `cap sync`. Faire évoluer l'application mobile revient donc à
-faire évoluer le client web.
+`web/` porte l'interface et la logique ; `android/` et `ios/` n'embarquent aucun
+code applicatif — leur `webDir` pointe sur `../web/dist`, et `npm run sync`
+reconstruit la SPA puis lance `cap sync`. Faire évoluer l'application mobile
+revient donc à faire évoluer le client web. Les deux coquilles sont jumelles :
+même structure, mêmes scripts, mêmes environnements.
 
 Les dossiers `-native` portent des implémentations complètes, qui redessinent les
 vues et réécrivent les appels réseau. `ios-native/` est le portage de

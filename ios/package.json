@@ -1,0 +1,26 @@
+{
+  "name": "@mindlog/todo-ios",
+  "version": "1.7.1",
+  "private": true,
+  "type": "module",
+  "description": "Coquille Capacitor iOS du client web mindlog.todo — la SPA est embarquée dans l'app, mise à jour par `npm run sync`.",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "sync": "bash scripts/sync.sh",
+    "sync:prod": "MINDLOG_ENV=prod bash scripts/sync.sh",
+    "sync:local": "MINDLOG_ENV=local bash scripts/sync.sh",
+    "build:debug": "bash scripts/sync.sh && bash scripts/xcode.sh build",
+    "build:release": "MINDLOG_ENV=prod bash scripts/sync.sh && bash scripts/xcode.sh archive",
+    "open": "cap open ios",
+    "doctor": "cap doctor"
+  },
+  "dependencies": {
+    "@capacitor/app": "^7.1.2",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0",
+    "typescript": "^5.9.3"
+  }
+}
