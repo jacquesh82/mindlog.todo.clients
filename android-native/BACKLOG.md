@@ -22,8 +22,11 @@ de chaque itération et mis à jour à la fin.
    (`feat(android-native): …`), comme l'historique du dépôt. Si la branche
    courante est la branche par défaut, en créer une d'abord.
 5. **Le S24 est le juge de recette** quand il est joignable
-   (`adb connect 192.168.1.152:40895`) et déverrouillé. S'il est verrouillé, ne
-   pas insister : noter la vérification comme non faite.
+   (`adb connect 192.168.1.152:40895`), déverrouillé ET LIBRE. S'il est
+   verrouillé, ou si une autre application est au premier plan — Jacques s'en
+   sert — ne pas insister : noter la vérification comme non faite. Prendre
+   l'écran interromprait son travail, et une capture photographierait ce qu'il
+   est en train de faire.
 6. Tenir à jour la section « Ce qui n'est pas implémenté » du `README.md` — c'est
    elle qui rend l'écart traçable.
 7. Ne jamais supprimer de données utilisateur sur gra01 ni sur le téléphone.
@@ -45,11 +48,11 @@ de chaque itération et mis à jour à la fin.
 - [x] Contrat : `notes` documenté — **15 routes** (et non 10 : le web n'en appelle pas la moitié), 61 endpoints publiés, test vert
 - [x] DTO générés + `NotesApi` (15 routes) + `NotesRepository`
 - [x] Écrans : carnets, pages, éditeur (module `feature/notes`) + entrée « Notes » dans le tiroir
-- [ ] Recette S24
+- [~] Recette S24 — NON faite : téléphone déverrouillé mais en cours d'usage personnel
 
 ### T3 — Recherche et IA
 
-- [ ] Contrat : documenter `ai` (10 routes) — recherche sémantique, ask, réglages, quotas
+- [x] Contrat : `ai` documenté — **12 routes** (prompts, usage, logs, réglages, modèles), 73 endpoints publiés, test vert
 - [ ] DTO + `AiApi` + `AiRepository`
 - [ ] Écrans : recherche, « Ask AI », réglages IA (BYOK)
 - [ ] Recette S24
@@ -111,3 +114,13 @@ de chaque itération et mis à jour à la fin.
   boîtes de la vue web alors qu'elles existent encore. Sauvegarde explicite et
   non à la frappe : chaque PATCH renvoie la page entière. `:app:assembleDebug`
   vert. Reste de T2 : la recette S24.
+- 2026-08-02 — Recette T2 abandonnée volontairement : le S24 était déverrouillé
+  mais Jacques s'en servait (session personnelle au premier plan). Faire la
+  recette imposait de voler l'écran et d'en capturer le contenu ; la capture
+  prise par erreur a été supprimée. **Règle 5 à préciser : « déverrouillé » ne
+  suffit pas, il faut aussi que l'appareil soit libre.**
+- 2026-08-02 — T3 (1/4) : contrat `ai` publié (12 routes, 73 endpoints, 59
+  schémas nommés), commité `5bfd8a5`. Huit interfaces converties en schémas.
+  Le contrat énonce deux invariants qui n'étaient écrits nulle part : la clé
+  d'API est en écriture seule, et `/ai/models` est un POST parce que la requête
+  peut porter une clé.
