@@ -54,6 +54,8 @@ import today.mindlog.todo.core.network.model.Task
 @Composable
 fun TasksScreen(
     onOpenNotes: () -> Unit = {},
+    onOpenSearch: () -> Unit = {},
+    onOpenAsk: () -> Unit = {},
     viewModel: TasksViewModel = hiltViewModel(),
 ) {
     val state by viewModel.tasks.collectAsStateWithLifecycle()
@@ -73,6 +75,14 @@ fun TasksScreen(
                 onOpenNotes = {
                     scope.launch { drawerState.close() }
                     onOpenNotes()
+                },
+                onOpenSearch = {
+                    scope.launch { drawerState.close() }
+                    onOpenSearch()
+                },
+                onOpenAsk = {
+                    scope.launch { drawerState.close() }
+                    onOpenAsk()
                 },
                 onSelect = { selection ->
                     viewModel.select(selection)

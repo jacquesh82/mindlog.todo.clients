@@ -23,10 +23,18 @@ import today.mindlog.todo.core.network.model.TaskSearchRequest
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Une recherche interroge DEUX corpus ; l'écran les présente séparément. */
+/**
+ * Une recherche interroge DEUX corpus ; l'écran les présente séparément.
+ *
+ * Les échecs sont PORTÉS, pas avalés : une liste vide parce que le corpus n'a
+ * rien trouvé et une liste vide parce que la requête a échoué se ressemblent à
+ * l'écran, et ne veulent pas dire la même chose.
+ */
 data class SearchResults(
     val tasks: List<TaskSearchHit> = emptyList(),
     val notes: List<NotePageHit> = emptyList(),
+    val tasksFailed: Boolean = false,
+    val notesFailed: Boolean = false,
 )
 
 sealed interface AiSettingsState {
@@ -63,9 +71,13 @@ class AiRepository @Inject constructor(
     suspend fun search(query: String, k: Int = 10): SearchResults = coroutineScope {
         val tasks = async { runCatching { todo.searchTasks(TaskSearchRequest(query = query, k = k)) } }
         val pages = async { runCatching { notes.searchPages(NoteSearchRequest(query = query, k = k)) } }
+        val taskResult = tasks.await()
+        val pageResult = pages.await()
         SearchResults(
-            tasks = tasks.await().getOrDefault(emptyList()),
-            notes = pages.await().getOrDefault(emptyList()),
+            tasks = taskResult.getOrDefault(emptyList()),
+            notes = pageResult.getOrDefault(emptyList()),
+            tasksFailed = taskResult.isFailure,
+            notesFailed = pageResult.isFailure,
         )
     }
 

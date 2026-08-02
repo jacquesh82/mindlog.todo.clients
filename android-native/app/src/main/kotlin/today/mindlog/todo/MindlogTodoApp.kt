@@ -17,6 +17,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import today.mindlog.todo.feature.auth.LoginScreen
+import today.mindlog.todo.feature.ai.AiSettingsScreen
+import today.mindlog.todo.feature.ai.AskScreen
+import today.mindlog.todo.feature.ai.SearchScreen
 import today.mindlog.todo.feature.notes.NotebooksScreen
 import today.mindlog.todo.feature.notes.PageEditorScreen
 import today.mindlog.todo.feature.notes.PagesScreen
@@ -30,6 +33,9 @@ import today.mindlog.todo.feature.tasks.TasksScreen
 @Serializable private data object Notebooks
 @Serializable private data class Pages(val notebookId: String, val notebookName: String)
 @Serializable private data class PageEditor(val pageId: String)
+@Serializable private data object Search
+@Serializable private data object Ask
+@Serializable private data object AiSettings
 
 @Composable
 fun MindlogTodoApp(viewModel: AppViewModel = hiltViewModel()) {
@@ -54,7 +60,21 @@ fun MindlogTodoApp(viewModel: AppViewModel = hiltViewModel()) {
                 }
             }
             composable<Login> { LoginScreen() }
-            composable<Tasks> { TasksScreen(onOpenNotes = { navController.navigate(Notebooks) }) }
+            composable<Tasks> {
+                TasksScreen(
+                    onOpenNotes = { navController.navigate(Notebooks) },
+                    onOpenSearch = { navController.navigate(Search) },
+                    onOpenAsk = { navController.navigate(Ask) },
+                )
+            }
+            composable<Search> { SearchScreen(onBack = { navController.popBackStack() }) }
+            composable<Ask> {
+                AskScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenSettings = { navController.navigate(AiSettings) },
+                )
+            }
+            composable<AiSettings> { AiSettingsScreen(onBack = { navController.popBackStack() }) }
             composable<Notebooks> {
                 NotebooksScreen(
                     onBack = { navController.popBackStack() },

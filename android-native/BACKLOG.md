@@ -54,7 +54,7 @@ de chaque itération et mis à jour à la fin.
 
 - [x] Contrat : `ai` documenté — **12 routes** (prompts, usage, logs, réglages, modèles), 73 endpoints publiés, test vert
 - [x] DTO générés + `AiApi` (12 routes) + `AiRepository` + recherche/ask de tâches dans `TodoApi`
-- [ ] Écrans : recherche, « Ask AI », réglages IA (BYOK)
+- [x] Écrans : recherche (deux corpus), « Ask AI » avec sources, réglages IA (BYOK et mode hébergé)
 - [ ] Recette S24
 
 ### T4 — Calendrier, karma, tableau de bord
@@ -131,3 +131,12 @@ de chaque itération et mis à jour à la fin.
   de produire des `AiSettingsProvidersInner`. Le dépôt interroge tâches ET notes
   en parallèle et tolère l'échec d'un seul corpus — la moitié des résultats vaut
   mieux que rien, à condition que l'écran le dise. Reste : les écrans.
+- 2026-08-02 — T3 (3/4) : module `feature/ai` — recherche, ask, réglages.
+  `SearchResults` porte désormais l'échec de chaque corpus : une liste vide
+  faute de résultats et une liste vide faute de réponse se ressemblent à
+  l'écran et ne veulent pas dire la même chose — l'écran affiche
+  « unavailable » plutôt que « no match ». Les sources de la réponse sont
+  rendues telles quelles : c'est ce qui permet de vérifier au lieu de croire.
+  Le champ de clé d'API est masqué, jamais pré-rempli, et vidé de l'état dès
+  l'envoi réussi. Mode hébergé : les réglages sont masqués plutôt qu'offerts
+  sans effet. `:app:assembleDebug` vert. Reste de T3 : la recette.

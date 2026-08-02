@@ -10,7 +10,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.List
@@ -46,6 +48,8 @@ fun NavigationDrawerContent(
     selected: TaskView,
     onSelect: (TaskView) -> Unit,
     onOpenNotes: () -> Unit = {},
+    onOpenSearch: () -> Unit = {},
+    onOpenAsk: () -> Unit = {},
 ) {
     ModalDrawerSheet {
         LazyColumn(contentPadding = PaddingValues(vertical = 12.dp)) {
@@ -87,6 +91,25 @@ fun NavigationDrawerContent(
                     count = null,
                     selected = false,
                     onClick = onOpenNotes,
+                )
+            }
+
+            item {
+                DrawerEntry(
+                    label = "Search",
+                    icon = Icons.Default.Search,
+                    count = null,
+                    selected = false,
+                    onClick = onOpenSearch,
+                )
+            }
+            item {
+                DrawerEntry(
+                    label = "Ask AI",
+                    icon = Icons.Default.AutoAwesome,
+                    count = null,
+                    selected = false,
+                    onClick = onOpenAsk,
                 )
             }
 
