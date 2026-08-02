@@ -320,6 +320,70 @@
         ],
         "type": "object"
       },
+      "Attachment": {
+        "properties": {
+          "byteSize": {
+            "type": "integer"
+          },
+          "content": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mime": {
+            "nullable": true,
+            "type": "string"
+          },
+          "taskId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "userId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "taskId",
+          "userId",
+          "filename",
+          "mime",
+          "byteSize",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "AttachmentCreateRequest": {
+        "properties": {
+          "content": {
+            "default": "",
+            "maxLength": 500000,
+            "type": "string"
+          },
+          "filename": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string"
+          },
+          "mime": {
+            "maxLength": 255,
+            "type": "string"
+          }
+        },
+        "required": [
+          "filename"
+        ],
+        "type": "object"
+      },
       "AuthProviders": {
         "properties": {
           "google": {
@@ -1710,6 +1774,33 @@
         },
         "type": "object"
       },
+      "StorageUsage": {
+        "properties": {
+          "attachmentsBytes": {
+            "type": "integer"
+          },
+          "cloudHosted": {
+            "type": "boolean"
+          },
+          "notesBytes": {
+            "type": "integer"
+          },
+          "quota": {
+            "type": "integer"
+          },
+          "totalBytes": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "notesBytes",
+          "attachmentsBytes",
+          "totalBytes",
+          "quota",
+          "cloudHosted"
+        ],
+        "type": "object"
+      },
       "Task": {
         "properties": {
           "assignee": {
@@ -2749,6 +2840,76 @@
         ]
       }
     },
+    "/api/v1/attachments/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "attachments"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Attachment"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "One attachment, with its extracted text",
+        "tags": [
+          "attachments"
+        ]
+      }
+    },
     "/api/v1/auth/forgot-password": {
       "post": {
         "requestBody": {
@@ -3299,6 +3460,36 @@
         "summary": "Server-Sent Events stream of data changes",
         "tags": [
           "events"
+        ]
+      }
+    },
+    "/api/v1/export": {
+      "get": {
+        "description": "Served as a download (`Content-Disposition`). The body aggregates every collection at once and has no fixed schema — it grows with the product, and pinning its shape here would freeze a backup format that is meant to stay exhaustive.",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "nullable": true
+                  },
+                  "properties": {},
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Full JSON export of the account (backup / portability)",
+        "tags": [
+          "account"
         ]
       }
     },
@@ -4746,6 +4937,31 @@
         ]
       }
     },
+    "/api/v1/storage": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageUsage"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Bytes held by notes and attachments, against the quota",
+        "tags": [
+          "account"
+        ]
+      }
+    },
     "/api/v1/tasks": {
       "get": {
         "parameters": [
@@ -5183,6 +5399,106 @@
         ],
         "tags": [
           "tasks"
+        ]
+      }
+    },
+    "/api/v1/tasks/{id}/attachments": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Attachment"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Attachments of a task, without their extracted text",
+        "tags": [
+          "attachments"
+        ]
+      },
+      "post": {
+        "description": "The extracted TEXT is what is stored — it feeds the task embedding. Binary files are not uploaded here; the caller extracts their text first.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachmentCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Attachment"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "attachments"
         ]
       }
     },

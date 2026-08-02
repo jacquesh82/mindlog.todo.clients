@@ -58,6 +58,7 @@ fun TasksScreen(
     onOpenAsk: () -> Unit = {},
     onOpenCalendar: () -> Unit = {},
     onOpenDashboard: () -> Unit = {},
+    onOpenAccount: () -> Unit = {},
     viewModel: TasksViewModel = hiltViewModel(),
 ) {
     val state by viewModel.tasks.collectAsStateWithLifecycle()
@@ -93,6 +94,10 @@ fun TasksScreen(
                 onOpenDashboard = {
                     scope.launch { drawerState.close() }
                     onOpenDashboard()
+                },
+                onOpenAccount = {
+                    scope.launch { drawerState.close() }
+                    onOpenAccount()
                 },
                 onSelect = { selection ->
                     viewModel.select(selection)

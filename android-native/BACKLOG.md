@@ -67,7 +67,7 @@ de chaque itération et mis à jour à la fin.
 ### T5 — Reste de la surface
 
 - [x] Contrat : `attachments`, `storage`, `export` — **88 endpoints, tous les routeurs montés sont couverts** (sauf `oauth`, voir journal)
-- [ ] Clés d'API et réglages de compte (le contrat les couvre déjà)
+- [x] Compte : profil, clés d'API, occupation disque, export (+ pièces jointes câblées, sans écran)
 - [ ] Pagination des tâches (aujourd'hui `limit=200`, au-delà des tâches manquent en silence)
 - [ ] Recette S24
 
@@ -183,3 +183,12 @@ de chaque itération et mis à jour à la fin.
 - 2026-08-02 — Recette T4 impossible : le S24 n'est plus joignable du tout
   (`No route to host`), adb sans fil coupé ou téléphone hors réseau.
   **Quatre recettes en attente.**
+- 2026-08-02 — T5 (2/4) : `AccountApi`, `AccountRepository`, écran de compte.
+  Client natif à **80 endpoints**. Le secret d'une clé d'API ne vit QUE dans le
+  ViewModel, le temps de l'afficher : le dépôt ne le garde pas, le serveur ne le
+  rendra plus, et la boîte qui le montre ne se ferme pas d'un tap à côté.
+  L'export part au presse-papier, pis-aller assumé faute de sélecteur de
+  fichier — dit à l'écran plutôt que masqué.
+  **Les pièces jointes sont câblées mais AUCUN écran ne les consomme** : il
+  faudrait une vue de détail de tâche, qui n'existe pas dans ce client et n'est
+  pas au plan. Signalé dans le dépôt plutôt que laissé croire au support complet.

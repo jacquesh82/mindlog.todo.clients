@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Event
@@ -54,6 +55,7 @@ fun NavigationDrawerContent(
     onOpenAsk: () -> Unit = {},
     onOpenCalendar: () -> Unit = {},
     onOpenDashboard: () -> Unit = {},
+    onOpenAccount: () -> Unit = {},
 ) {
     ModalDrawerSheet {
         LazyColumn(contentPadding = PaddingValues(vertical = 12.dp)) {
@@ -133,6 +135,16 @@ fun NavigationDrawerContent(
                     count = null,
                     selected = false,
                     onClick = onOpenDashboard,
+                )
+            }
+
+            item {
+                DrawerEntry(
+                    label = "Account",
+                    icon = Icons.Default.AccountCircle,
+                    count = null,
+                    selected = false,
+                    onClick = onOpenAccount,
                 )
             }
 

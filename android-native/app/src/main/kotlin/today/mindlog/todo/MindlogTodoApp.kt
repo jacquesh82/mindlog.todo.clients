@@ -17,6 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import today.mindlog.todo.feature.auth.LoginScreen
+import today.mindlog.todo.feature.ai.AccountScreen
 import today.mindlog.todo.feature.ai.AiSettingsScreen
 import today.mindlog.todo.feature.calendar.CalendarScreen
 import today.mindlog.todo.feature.calendar.DashboardScreen
@@ -40,6 +41,7 @@ import today.mindlog.todo.feature.tasks.TasksScreen
 @Serializable private data object AiSettings
 @Serializable private data object Calendar
 @Serializable private data object Dashboard
+@Serializable private data object Account
 
 @Composable
 fun MindlogTodoApp(viewModel: AppViewModel = hiltViewModel()) {
@@ -71,6 +73,7 @@ fun MindlogTodoApp(viewModel: AppViewModel = hiltViewModel()) {
                     onOpenAsk = { navController.navigate(Ask) },
                     onOpenCalendar = { navController.navigate(Calendar) },
                     onOpenDashboard = { navController.navigate(Dashboard) },
+                    onOpenAccount = { navController.navigate(Account) },
                 )
             }
             composable<Search> { SearchScreen(onBack = { navController.popBackStack() }) }
@@ -83,6 +86,7 @@ fun MindlogTodoApp(viewModel: AppViewModel = hiltViewModel()) {
             composable<AiSettings> { AiSettingsScreen(onBack = { navController.popBackStack() }) }
             composable<Calendar> { CalendarScreen(onBack = { navController.popBackStack() }) }
             composable<Dashboard> { DashboardScreen(onBack = { navController.popBackStack() }) }
+            composable<Account> { AccountScreen(onBack = { navController.popBackStack() }) }
             composable<Notebooks> {
                 NotebooksScreen(
                     onBack = { navController.popBackStack() },
