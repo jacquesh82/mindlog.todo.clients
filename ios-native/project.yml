@@ -1,0 +1,102 @@
+# Le projet Xcode est GÉNÉRÉ à partir de ce fichier, par XcodeGen :
+#
+#     brew install xcodegen && xcodegen generate
+#
+# Ce qui est versionné est cette description, pas le `.xcodeproj` — un fichier
+# de projet Xcode est illisible en revue et entre en conflit à la moindre
+# modification simultanée. C'est le pendant de `build-logic/convention/` du côté
+# Android : la configuration de build est du code, pas un état d'IDE.
+#
+# Les cibles de bibliothèque viennent de `Package.swift` ; ce projet n'ajoute
+# que l'application, parce qu'une cible SwiftPM ne peut porter ni Info.plist, ni
+# droits, ni identité de signature.
+
+name: MindlogTodo
+
+options:
+  bundleIdPrefix: today.mindlog.todo
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+# Trois configurations, une par déploiement — l'équivalent de `-PmindlogEnv`.
+# `Release` vise la prod : un build non qualifié n'est jamais une préproduction.
+configs:
+  Debug-local: debug
+  Debug-qualif: debug
+  Release: release
+
+packages:
+  MindlogTodo:
+    path: .
+
+targets:
+  MindlogTodo:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+    dependencies:
+      - package: MindlogTodo
+        product: CoreDesignSystem
+      - package: MindlogTodo
+        product: CoreDatastore
+      - package: MindlogTodo
+        product: CoreNetwork
+      - package: MindlogTodo
+        product: CoreData
+      - package: MindlogTodo
+        product: FeatureAuth
+      - package: MindlogTodo
+        product: FeatureTasks
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        TARGETED_DEVICE_FAMILY: "1,2"
+        # Signature automatique, équipe non fixée : un clone frais construit
+        # pour le simulateur sans aucun secret — `scripts/xcode.sh` passe
+        # `CODE_SIGNING_ALLOWED=NO`. C'est le pendant du `keystore.properties`
+        # absent qui laisse la variante release d'Android se construire non
+        # signée.
+        CODE_SIGN_STYLE: Automatic
+      configs:
+        Debug-local:
+          PRODUCT_BUNDLE_IDENTIFIER: today.mindlog.todo.native.testing
+          INFOPLIST_FILE: App/Info-Debug.plist
+          MINDLOG_ENV: local
+          MINDLOG_APP_NAME: mindlog todo (local)
+        Debug-qualif:
+          PRODUCT_BUNDLE_IDENTIFIER: today.mindlog.todo.native.testing
+          INFOPLIST_FILE: App/Info-Debug.plist
+          MINDLOG_ENV: qualif
+          MINDLOG_APP_NAME: mindlog todo (qualif)
+        Release:
+          PRODUCT_BUNDLE_IDENTIFIER: today.mindlog.todo.native
+          INFOPLIST_FILE: App/Info.plist
+          MINDLOG_ENV: prod
+          MINDLOG_APP_NAME: mindlog todo
+
+schemes:
+  MindlogTodo (local):
+    build:
+      targets: { MindlogTodo: all }
+    run:
+      config: Debug-local
+    test:
+      config: Debug-local
+  MindlogTodo (qualif):
+    build:
+      targets: { MindlogTodo: all }
+    run:
+      config: Debug-qualif
+    test:
+      config: Debug-qualif
+  MindlogTodo (prod):
+    build:
+      targets: { MindlogTodo: all }
+    run:
+      config: Release
+    archive:
+      config: Release

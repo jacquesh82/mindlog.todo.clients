@@ -7,8 +7,8 @@ gestionnaire de tâches avec API REST et serveur MCP. Un dossier par plateforme.
 web/             SPA React + Vite — client REST de l'API todo
 android/         coquille Capacitor embarquant web/
 ios/             coquille Capacitor embarquant web/       (vide)
-android-native/  implémentation Kotlin / Compose          (vide)
-ios-native/      implémentation Swift / SwiftUI           (vide)
+android-native/  implémentation Kotlin / Compose
+ios-native/      implémentation Swift / SwiftUI
 ```
 
 `web/` porte l'interface et la logique ; `android/` n'embarque aucun code
@@ -16,9 +16,12 @@ applicatif — sa `webDir` pointe sur `../web/dist`, et `npm run sync` reconstru
 la SPA puis lance `cap sync`. Faire évoluer l'application mobile revient donc à
 faire évoluer le client web.
 
-Les dossiers `-native` sont prévus pour des implémentations complètes, qui
-redessinent les vues et réécrivent les appels réseau. Leurs README détaillent ce
-que cela implique.
+Les dossiers `-native` portent des implémentations complètes, qui redessinent les
+vues et réécrivent les appels réseau. `ios-native/` est le portage de
+`android-native/` : même découpage en modules, mêmes dépôts, mêmes décisions, et
+un README qui liste les écarts assumés. Leurs README détaillent ce que cela
+implique — une évolution fonctionnelle doit désormais être portée trois fois, et
+rien ne signale un oubli.
 
 ## Démarrage
 
@@ -32,6 +35,14 @@ L'API doit tourner à part : `cd ../mindlog.todo && docker compose up -d api`.
 cd android && npm install
 npm run sync            # environnement de qualification (défaut)
 npm run build:release   # APK de production
+```
+
+Les clients natifs se construisent depuis leur propre dossier, avec la même
+variable d'environnement de part et d'autre :
+
+```sh
+cd android-native && ./scripts/gradle.sh assembleDebug     # qualif par défaut
+cd ios-native && xcodegen generate && ./scripts/xcode.sh build
 ```
 
 ## Types partagés avec le serveur

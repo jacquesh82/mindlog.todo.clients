@@ -1,0 +1,14 @@
+# Le projet Xcode est généré par XcodeGen à partir de project.yml.
+MindlogTodo.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+
+.build/
+.swiftpm/
+DerivedData/
+Package.resolved
+
+# Signature — jamais dans le dépôt, comme les *.jks du client Android.
+*.p12
+*.mobileprovision
+ExportOptions.plist

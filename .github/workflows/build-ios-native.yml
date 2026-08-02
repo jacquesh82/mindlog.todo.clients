@@ -1,0 +1,159 @@
+name: Build ios-native
+
+# Construit le client iOS natif et dépose un .ipa **non signé** en artefact.
+#
+# Non signé, et c'est délibéré : la signature se fait sur la machine de
+# développement avec iloader, qui obtient un certificat de développement depuis
+# un Apple ID gratuit. Un certificat gratuit ne peut pas vivre dans une CI —
+# il expire au bout de sept jours et son obtention demande une authentification
+# à deux facteurs interactive. La CI produit donc l'application, et rien de plus.
+#
+# C'est aussi le seul endroit où ce code est compilé : `Sources/CoreDesignSystem`,
+# `FeatureAuth`, `FeatureTasks` et `App/` importent SwiftUI et UIKit, qui
+# n'existent que sur une machine Apple.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Déploiement visé par le build
+        type: choice
+        options:
+          - qualif
+          - prod
+          - local
+        default: qualif
+  push:
+    branches:
+      - main
+    paths:
+      - 'ios-native/**'
+      - '.github/workflows/build-ios-native.yml'
+  pull_request:
+    paths:
+      - 'ios-native/**'
+
+concurrency:
+  group: build-ios-native-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ios-native
+
+    env:
+      # `qualif` par défaut, comme le workflow Android : un build déclenché par
+      # un push ne part jamais sur la production.
+      MINDLOG_ENV: ${{ inputs.environment || 'qualif' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Le mode langage Swift 6 est exigé par Package.swift ; sans lui l'échec
+      # arriverait plus loin, sous la forme de centaines d'erreurs de
+      # concurrence stricte, ce qui est illisible.
+      - name: Chaîne d'outils
+        run: |
+          xcodebuild -version
+          swift --version
+          swift --version | grep -qE 'Swift version (6|[7-9])\.' || {
+            echo "::error::Swift 6 ou plus est requis (Package.swift déclare swiftLanguageModes: [.v6])."
+            exit 1
+          }
+
+      # Le projet Xcode n'est pas versionné : il est décrit par project.yml.
+      - name: Installe XcodeGen
+        run: brew install xcodegen
+
+      # Les tests tournent sur un simulateur iOS et non via `swift test` : le
+      # paquet contient des cibles qui importent UIKit, indisponible quand SwiftPM
+      # construit pour macOS. Le détour par le simulateur a un second effet, qui
+      # est en réalité le principal — il compile TOUTES les cibles, y compris les
+      # écrans SwiftUI, qu'aucun test ne couvre.
+      - name: Tests du paquet (simulateur iOS)
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          runtimes = json.load(sys.stdin)['devices']
+          for runtime, devices in sorted(runtimes.items()):
+              if 'iOS' not in runtime:
+                  continue
+              for device in devices:
+                  if device['name'].startswith('iPhone'):
+                      print(device['udid'])
+                      raise SystemExit
+          ")
+          if [ -z "$UDID" ]; then
+            echo "::error::Aucun simulateur iPhone disponible sur ce runner."
+            exit 1
+          fi
+          xcodebuild test \
+            -scheme MindlogTodo-Package \
+            -destination "id=$UDID" \
+            -skipPackagePluginValidation
+
+      - name: Génère le projet Xcode
+        run: xcodegen generate
+
+      # CODE_SIGNING_ALLOWED=NO produit un .app sans signature ni profil.
+      # iloader remplacera les deux : il réécrit l'identifiant de bundle pour
+      # qu'il appartienne au compte, injecte son propre profil de provisionnement
+      # et signe. Signer ici ne servirait donc à rien, même avec un certificat.
+      - name: Construit l'application (non signée)
+        run: |
+          case "$MINDLOG_ENV" in
+            prod)   SCHEME='MindlogTodo (prod)';   CONFIG='Release' ;;
+            qualif) SCHEME='MindlogTodo (qualif)'; CONFIG='Debug-qualif' ;;
+            local)  SCHEME='MindlogTodo (local)';  CONFIG='Debug-local' ;;
+            *) echo "::error::MINDLOG_ENV inattendu : $MINDLOG_ENV"; exit 1 ;;
+          esac
+          echo "Scheme=$SCHEME Configuration=$CONFIG"
+          xcodebuild build \
+            -project MindlogTodo.xcodeproj \
+            -scheme "$SCHEME" \
+            -configuration "$CONFIG" \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            -skipPackagePluginValidation \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS=""
+
+      # Un .ipa est une archive zip contenant un seul dossier `Payload`. Rien de
+      # plus : l'outillage Apple n'ajoute que la signature, que nous n'avons pas.
+      - name: Empaquette en .ipa
+        run: |
+          APP=$(find build/Build/Products -maxdepth 2 -name '*.app' -type d | head -1)
+          if [ -z "$APP" ]; then
+            echo "::error::Aucun .app produit — le build a réussi sans rien écrire ?"
+            exit 1
+          fi
+          echo "Application : $APP"
+          rm -rf Payload
+          mkdir Payload
+          cp -R "$APP" Payload/
+          zip -qry "MindlogTodo-$MINDLOG_ENV.ipa" Payload
+          rm -rf Payload
+          ls -lh "MindlogTodo-$MINDLOG_ENV.ipa"
+          # Le nom du bundle et le schéma d'URL enregistré, pour vérifier d'un
+          # coup d'œil que le build vise bien l'environnement demandé.
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :MindlogEnv' "$APP/Info.plist"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipa-${{ inputs.environment || 'qualif' }}-unsigned
+          path: ios-native/MindlogTodo-*.ipa
+          if-no-files-found: error
+
+      - name: Journaux en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-logs
+          path: ios-native/build/Logs/**
+          if-no-files-found: ignore
