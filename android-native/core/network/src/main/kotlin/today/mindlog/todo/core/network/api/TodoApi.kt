@@ -48,6 +48,10 @@ interface TodoApi {
     suspend fun listTasks(
         @Query("completed") completed: Boolean? = null,
         @Query("root") root: Boolean? = null,
+        @Query("projectId") projectId: String? = null,
+        @Query("labelId") labelId: String? = null,
+        /** ISO instant. `Today` is expressed as "due before tomorrow", so it includes overdue. */
+        @Query("dueBefore") dueBefore: String? = null,
         @Query("limit") limit: Int = 200,
     ): List<Task>
 

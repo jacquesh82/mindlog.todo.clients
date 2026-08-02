@@ -20,6 +20,8 @@ import today.mindlog.todo.core.network.model.ChangeEvent
 import today.mindlog.todo.core.network.model.Task
 import today.mindlog.todo.core.network.model.TaskQuickAddRequest
 import today.mindlog.todo.core.network.model.TaskUpdateRequest
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.TimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -49,10 +51,15 @@ class TaskRepository @Inject constructor(
     private val api: TodoApi,
     private val events: ChangeEventStream,
     private val sessionStore: SessionStore,
+    private val navigation: NavigationRepository,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) {
     private val _state = MutableStateFlow<TasksState>(TasksState.Loading)
     val state: StateFlow<TasksState> = _state.asStateFlow()
+
+    /** Vue courante ; « Aujourd'hui » à l'ouverture, comme sur le web. */
+    private val _view = MutableStateFlow<TaskView>(TaskView.Today)
+    val view: StateFlow<TaskView> = _view.asStateFlow()
 
     /**
      * Subscribes to the change stream, but only while signed in.
@@ -85,11 +92,58 @@ class TaskRepository @Inject constructor(
         }
     }
 
+    /**
+     * Sélectionne ce que la liste montre. Le rechargement passe par le serveur,
+     * y compris pour un simple projet : filtrer localement supposerait d'avoir
+     * DÉJÀ toutes les tâches, ce que `limit=200` ne garantit pas — la liste
+     * paraîtrait juste jusqu'au jour où elle omettrait des lignes en silence.
+     */
+    fun select(view: TaskView) {
+        _view.value = view
+        scope.launch { refresh() }
+    }
+
     suspend fun refresh() {
         if (sessionStore.accessToken() == null) return
-        _state.value = runCatching { api.listTasks(completed = false, root = true) }
+        _state.value = runCatching { load(_view.value) }
             .fold({ TasksState.Ready(it) }, { TasksState.Failed(it) })
     }
+
+    private suspend fun load(view: TaskView): List<Task> = when (view) {
+        // `root = true` n'est demandé que sur les vues d'ensemble : dans un
+        // projet ou un filtre, une sous-tâche dont le parent vit ailleurs doit
+        // rester visible, sinon elle disparaît de la seule vue qui la contient.
+        TaskView.Today -> api.listTasks(completed = false, root = true, dueBefore = tomorrow())
+        TaskView.All -> api.listTasks(completed = false, root = true)
+        TaskView.Inbox -> inboxProjectId()
+            ?.let { api.listTasks(completed = false, projectId = it) }
+            .orEmpty()
+
+        is TaskView.Project -> api.listTasks(completed = false, projectId = view.id)
+        is TaskView.Label -> api.listTasks(completed = false, labelId = view.id)
+        is TaskView.Filter -> api.runFilter(view.id)
+    }
+
+    /**
+     * « Aujourd'hui » = dû AVANT demain, ce qui inclut les retards — la même
+     * borne que le client web. Minuit local, pas UTC : la journée de
+     * l'utilisateur est celle de son fuseau.
+     */
+    private fun tomorrow(): String =
+        LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toString()
+
+    /**
+     * La boîte de réception est un PROJET marqué `isInbox`, pas une vue à part.
+     * On lit d'abord l'état du tiroir, déjà chargé dans l'écrasante majorité des
+     * cas ; le repli n'existe que pour la sélection faite avant sa première
+     * réponse.
+     */
+    private suspend fun inboxProjectId(): String? =
+        (navigation.state.value as? NavigationState.Ready)
+            ?.projects
+            ?.firstOrNull { it.isInbox }
+            ?.id
+            ?: runCatching { api.listProjects().firstOrNull { it.isInbox }?.id }.getOrNull()
 
     suspend fun quickAdd(text: String): Result<Task> = runCatching {
         // Minutes east of UTC, so the server resolves "tomorrow" against the

@@ -31,9 +31,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
@@ -49,12 +55,39 @@ import today.mindlog.todo.core.network.model.Task
 fun TasksScreen(viewModel: TasksViewModel = hiltViewModel()) {
     val state by viewModel.tasks.collectAsStateWithLifecycle()
     val quickAdd by viewModel.quickAdd.collectAsStateWithLifecycle()
+    val navigation by viewModel.navigation.collectAsStateWithLifecycle()
+    val view by viewModel.view.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState()
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            NavigationDrawerContent(
+                state = navigation,
+                selected = view,
+                onSelect = { selection ->
+                    viewModel.select(selection)
+                    // Refermer fait partie de la sélection : la liste est
+                    // derrière le tiroir, la laisser ouverte cacherait ce qu'on
+                    // vient de demander.
+                    scope.launch { drawerState.close() }
+                },
+            )
+        },
+    ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Tasks") },
+                // Le titre EST la vue sélectionnée : c'est le seul repère qui
+                // dise ce que la liste montre une fois le tiroir refermé.
+                title = { Text(view.title) },
+                navigationIcon = {
+                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                        Icon(Icons.Default.Menu, contentDescription = "Open navigation")
+                    }
+                },
                 actions = {
                     IconButton(onClick = viewModel::signOut) {
                         Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out")
@@ -84,7 +117,7 @@ fun TasksScreen(viewModel: TasksViewModel = hiltViewModel()) {
                 is TasksState.Ready ->
                     if (current.tasks.isEmpty()) {
                         Text(
-                            "Nothing to do.",
+                            "Nothing in ${view.title}.",
                             modifier = Modifier.align(Alignment.Center),
                             style = MaterialTheme.typography.bodyLarge,
                         )
@@ -107,6 +140,7 @@ fun TasksScreen(viewModel: TasksViewModel = hiltViewModel()) {
                 QuickAddSheet(quickAdd, viewModel)
             }
         }
+    }
     }
 }
 

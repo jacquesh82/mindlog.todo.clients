@@ -32,8 +32,24 @@ import today.mindlog.todo.core.network.model.Section
 import today.mindlog.todo.core.network.model.SectionCreateRequest
 import today.mindlog.todo.core.network.model.SectionUpdateRequest
 import today.mindlog.todo.core.network.model.Task
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/**
+ * Compteurs de tâches ouvertes affichés en regard de chaque entrée.
+ *
+ * Calculés ICI, à partir d'une seule lecture des tâches ouvertes, plutôt que
+ * demandés au serveur entrée par entrée : un badge par projet et par étiquette
+ * ferait autant de requêtes que le tiroir a de lignes. Le client web fait le
+ * même choix dans `reloadSidebar`.
+ */
+data class DrawerCounts(
+    val today: Int = 0,
+    val inbox: Int = 0,
+    val byProject: Map<String, Int> = emptyMap(),
+    val byLabel: Map<String, Int> = emptyMap(),
+)
 
 sealed interface NavigationState {
     data object Loading : NavigationState
@@ -41,6 +57,7 @@ sealed interface NavigationState {
         val projects: List<Project>,
         val labels: List<Label>,
         val filters: List<Filter>,
+        val counts: DrawerCounts,
     ) : NavigationState
 
     data class Failed(val cause: Throwable) : NavigationState
@@ -108,9 +125,36 @@ class NavigationRepository @Inject constructor(
                 val projects = async { api.listProjects() }
                 val labels = async { api.listLabels() }
                 val filters = async { api.listFilters() }
-                NavigationState.Ready(projects.await(), labels.await(), filters.await())
+                // Les tâches ouvertes ne servent QU'aux compteurs : la liste
+                // affichée est celle du dépôt de tâches, qui suit la vue
+                // sélectionnée et n'a pas la même portée.
+                val open = async { api.listTasks(completed = false) }
+                val loaded = projects.await()
+                NavigationState.Ready(
+                    projects = loaded,
+                    labels = labels.await(),
+                    filters = filters.await(),
+                    counts = countsOf(open.await(), loaded),
+                )
             }
         }.fold({ it }, { NavigationState.Failed(it) })
+    }
+
+    /**
+     * `dueDate` est comparée sur ses dix premiers caractères, donc sur la date
+     * civile telle que le serveur l'a écrite. C'est une approximation assumée
+     * pour un badge : la borne exacte d'« aujourd'hui » (minuit local) est
+     * appliquée par le serveur quand la vue est réellement ouverte.
+     */
+    private fun countsOf(open: List<Task>, projects: List<Project>): DrawerCounts {
+        val today = LocalDate.now().toString()
+        val inboxId = projects.firstOrNull { it.isInbox }?.id
+        return DrawerCounts(
+            today = open.count { t -> t.dueDate?.take(10)?.let { it <= today } == true },
+            inbox = inboxId?.let { id -> open.count { it.projectId == id } } ?: 0,
+            byProject = open.mapNotNull { it.projectId }.groupingBy { it }.eachCount(),
+            byLabel = open.flatMap { it.labelIds }.groupingBy { it }.eachCount(),
+        )
     }
 
     // --- projects ---------------------------------------------------------

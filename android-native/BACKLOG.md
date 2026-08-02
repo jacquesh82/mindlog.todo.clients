@@ -36,9 +36,9 @@ de chaque itération et mis à jour à la fin.
 - [x] DTO régénérés (`Filter`, `FilterCreateRequest`, `FilterUpdateRequest`)
 - [x] `TodoApi` : CRUD projets / sections / étiquettes / filtres (32 endpoints côté client)
 - [x] Dépôt : `NavigationRepository` — projets, étiquettes, filtres (+ sections à la demande)
-- [ ] Écran : tiroir de navigation — projets (avec compteurs), étiquettes, filtres, vues Aujourd'hui / Boîte de réception
-- [ ] Filtrage de `TasksScreen` par la sélection du tiroir
-- [ ] Recette S24
+- [x] Écran : tiroir de navigation — projets (avec compteurs), étiquettes, filtres, vues Aujourd'hui / Boîte de réception
+- [x] Filtrage de `TasksScreen` par la sélection du tiroir
+- [~] Recette S24 — APK installé, vérification visuelle NON faite (téléphone verrouillé)
 
 ### T2 — Notes et carnets
 
@@ -80,3 +80,9 @@ de chaque itération et mis à jour à la fin.
   client web aboutit au même regroupement dans `reloadSidebar`. Les sections
   restent hors de l'état : elles appartiennent à un projet et se lisent à la
   demande. Reste de T1 : l'écran de tiroir et le filtrage de `TasksScreen`.
+- 2026-08-02 — T1 terminée côté code : `TaskView` (sélection nommée), sélection
+  servie PAR LE SERVEUR (`projectId`, `labelId`, `dueBefore`, `GET /filters/{id}/tasks`)
+  et non par filtrage local — `limit=200` ne garantit pas d'avoir toute la liste.
+  Compteurs calculés depuis une seule lecture des tâches ouvertes, comme
+  `reloadSidebar` côté web. `:app:assembleDebug` vert, APK installé sur le S24 ;
+  **recette visuelle non faite**, le téléphone s'est reverrouillé.

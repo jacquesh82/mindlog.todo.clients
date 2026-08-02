@@ -9,7 +9,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import today.mindlog.todo.core.data.AuthRepository
+import today.mindlog.todo.core.data.NavigationRepository
+import today.mindlog.todo.core.data.NavigationState
 import today.mindlog.todo.core.data.TaskRepository
+import today.mindlog.todo.core.data.TaskView
 import today.mindlog.todo.core.data.TasksState
 import javax.inject.Inject
 
@@ -22,17 +25,26 @@ data class QuickAddState(
 @HiltViewModel
 class TasksViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
+    private val navigationRepository: NavigationRepository,
     private val authRepository: AuthRepository,
 ) : ViewModel() {
 
     val tasks: StateFlow<TasksState> = taskRepository.state
+
+    /** Contenu du tiroir, et vue sélectionnée : les deux viennent des dépôts. */
+    val navigation: StateFlow<NavigationState> = navigationRepository.state
+    val view: StateFlow<TaskView> = taskRepository.view
 
     private val _quickAdd = MutableStateFlow(QuickAddState())
     val quickAdd: StateFlow<QuickAddState> = _quickAdd.asStateFlow()
 
     init {
         viewModelScope.launch { taskRepository.refresh() }
+        viewModelScope.launch { navigationRepository.refresh() }
     }
+
+    /** Sélection dans le tiroir : le dépôt recharge la liste pour cette vue. */
+    fun select(view: TaskView) = taskRepository.select(view)
 
     fun refresh() = viewModelScope.launch { taskRepository.refresh() }
 
