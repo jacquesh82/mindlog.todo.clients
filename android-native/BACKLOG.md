@@ -55,11 +55,11 @@ de chaque itération et mis à jour à la fin.
 - [x] Contrat : `ai` documenté — **12 routes** (prompts, usage, logs, réglages, modèles), 73 endpoints publiés, test vert
 - [x] DTO générés + `AiApi` (12 routes) + `AiRepository` + recherche/ask de tâches dans `TodoApi`
 - [x] Écrans : recherche (deux corpus), « Ask AI » avec sources, réglages IA (BYOK et mode hébergé)
-- [ ] Recette S24
+- [~] Recette S24 — NON faite : téléphone verrouillé
 
 ### T4 — Calendrier, karma, tableau de bord
 
-- [ ] Contrat : documenter `calendar` (4), `karma` (1), `dashboard` (1)
+- [x] Contrat : `calendar` (7 routes), `karma`, `dashboard` — **82 endpoints publiés**, test vert
 - [ ] DTO + API + dépôts
 - [ ] Écrans : sources de calendrier, événements, karma, tableau de bord
 - [ ] Recette S24
@@ -140,3 +140,12 @@ de chaque itération et mis à jour à la fin.
   Le champ de clé d'API est masqué, jamais pré-rempli, et vidé de l'état dès
   l'envoi réussi. Mode hébergé : les réglages sont masqués plutôt qu'offerts
   sans effet. `:app:assembleDebug` vert. Reste de T3 : la recette.
+- 2026-08-02 — T4 (1/3) : contrat calendrier/karma/tableau de bord (82 endpoints,
+  commit `9349204`). `MindlogIdConnectionStatus` déplacé de `auth.service.ts`
+  vers le domaine — le document ne lit que le domaine, l'état de rattachement
+  lui était invisible. Blocs du tableau de bord nommés séparément et `karma`
+  publié en $ref vers le même schéma que `/karma`. Vérifié : plus aucun schéma
+  au nom dérivé d'un chemin dans tout le document.
+- 2026-08-02 — Recette T3 non faite : téléphone verrouillé. **Trois recettes en
+  attente** (T1, T2, T3). L'écart entre « compile » et « fonctionne » ne se
+  réduit pas ; c'est le risque principal du plan de charge à ce stade.
