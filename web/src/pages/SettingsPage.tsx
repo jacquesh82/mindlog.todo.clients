@@ -252,7 +252,7 @@ function McpConnectorCard() {
           <button
             type="button"
             onClick={create}
-            className="shrink-0 rounded-md bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+            className="shrink-0 rounded-md bg-brand px-3 py-2 text-sm font-medium text-brand-ink hover:bg-brand-hover"
           >
             {t('settings.mcpGenerate')}
           </button>
@@ -466,7 +466,7 @@ function AiConfigCard() {
         type="button"
         onClick={() => void save()}
         disabled={saving}
-        className="mt-4 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
+        className="mt-4 rounded-md bg-brand px-4 py-2 text-sm font-medium text-brand-ink hover:bg-brand-hover disabled:opacity-60"
       >
         {t('settings.ai.save')}
       </button>
@@ -641,7 +641,7 @@ function AiPromptsCard() {
             <button
               onClick={() => void save(active.key)}
               disabled={busy || !dirty}
-              className="rounded-md bg-brand px-4 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+              className="rounded-md bg-brand px-4 py-1.5 text-sm font-medium text-brand-ink hover:bg-brand-hover disabled:opacity-50"
             >
               {t('settings.prompts.save')}
             </button>
@@ -805,7 +805,7 @@ function AccountCard() {
         type="button"
         onClick={() => void save()}
         disabled={saving}
-        className="mt-4 rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
+        className="mt-4 rounded-md bg-brand px-4 py-2 text-sm font-medium text-brand-ink hover:bg-brand-hover disabled:opacity-60"
       >
         {t('settings.account.save')}
       </button>
@@ -963,7 +963,7 @@ function CalendarSourcesCard() {
           placeholder="https://…/basic.ics"
           className="min-w-0 flex-1 rounded-md border border-line bg-surface px-3 py-1.5 text-sm text-ink outline-none focus:border-brand"
         />
-        <button onClick={add} className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover">
+        <button onClick={add} className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-ink hover:bg-brand-hover">
           {t('cal.addSource')}
         </button>
       </div>
@@ -1035,7 +1035,7 @@ function MindlogIdCalendarCard() {
           <div className="flex gap-2">
             <a
               href={api.mindlogIdUrl()}
-              className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover"
+              className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-ink hover:bg-brand-hover"
             >
               {t('settings.mlcal.reconnect')}
             </a>
@@ -1055,7 +1055,7 @@ function MindlogIdCalendarCard() {
           <p className="text-sm text-muted">{t('settings.mlcal.notConnected')}</p>
           <a
             href={api.mindlogIdUrl()}
-            className="inline-block rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover"
+            className="inline-block rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-ink hover:bg-brand-hover"
           >
             {t('settings.mlcal.connect')}
           </a>
@@ -1221,7 +1221,7 @@ function DataExportCard() {
       <button
         onClick={download}
         disabled={busy}
-        className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+        className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-ink hover:bg-brand-hover disabled:opacity-50"
       >
         {busy ? t('common.loading') : t('settings.exportBtn')}
       </button>

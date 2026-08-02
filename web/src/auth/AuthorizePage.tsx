@@ -109,8 +109,8 @@ export function AuthorizePage() {
           type="button"
           onClick={() => void decide(true)}
           disabled={submitting !== null}
-          className="flex-1 rounded-md px-4 py-2 text-sm font-medium text-white"
-          style={{ background: 'var(--color-brand)' }}
+          className="flex-1 rounded-md px-4 py-2 text-sm font-medium"
+          style={{ background: 'var(--color-brand)', color: 'var(--color-brand-ink)' }}
         >
           {submitting === 'allow' ? t('common.loading') : t('authorize.allow')}
         </button>

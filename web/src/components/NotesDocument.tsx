@@ -54,7 +54,7 @@ export function NotesDocument({ pageId, initialContent, onChange, onCreateTask, 
   }
 
   const seg = (on: boolean) =>
-    `px-2 py-1 ${on ? 'bg-brand text-white' : 'text-ink hover:bg-line/60'}`;
+    `px-2 py-1 ${on ? 'bg-brand text-brand-ink' : 'text-ink hover:bg-line/60'}`;
   const segSoft = (on: boolean) =>
     `px-2 py-1 ${on ? 'bg-brand-soft text-brand' : 'text-ink hover:bg-line/60'}`;
 

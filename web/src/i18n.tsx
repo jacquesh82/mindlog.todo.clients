@@ -217,6 +217,21 @@ const en: Dict = {
   'login.resetSent': 'If an account exists for that email, a reset link is on its way.',
   'login.backToLogin': 'Back to sign in',
   'login.mindlogIdBtn': 'Sign in with mindlog id',
+  'login.signInTitle': 'Sign in to your account',
+  'login.registerTitle': 'Create an account',
+  'login.signIn': 'Sign in',
+  'login.register': 'Register',
+  'login.noAccount': 'No account?',
+  'login.haveAccount': 'Have an account?',
+  'login.displayName': 'Display name (optional)',
+  // Inscription : les deux natures de compte, annoncées séparément.
+  'login.or': 'or',
+  'login.localTitle': 'Local account',
+  'login.localHint': 'An email and a password, used for mindlog.todo only.',
+  'login.mindlogIdTitle': 'mindlog id account',
+  'login.mindlogIdHint':
+    'One identity for every mindlog app, with passkey sign-in — no password to remember.',
+  'login.mindlogIdRegisterBtn': 'Continue with mindlog id',
   'login.mindlogIdEmailTitle': 'One more step',
   'login.mindlogIdEmailHint':
     "Your mindlog id has no email on file. Enter one to finish creating your account.",
@@ -610,6 +625,21 @@ const fr: Dict = {
   'login.resetSent': 'Si un compte existe pour cet e-mail, un lien de réinitialisation arrive.',
   'login.backToLogin': 'Retour à la connexion',
   'login.mindlogIdBtn': 'Se connecter avec mindlog id',
+  'login.signInTitle': 'Connectez-vous à votre compte',
+  'login.registerTitle': 'Créer un compte',
+  'login.signIn': 'Se connecter',
+  'login.register': "S'inscrire",
+  'login.noAccount': 'Pas encore de compte ?',
+  'login.haveAccount': 'Déjà un compte ?',
+  'login.displayName': 'Nom affiché (facultatif)',
+  // Inscription : les deux natures de compte, annoncées séparément.
+  'login.or': 'ou',
+  'login.localTitle': 'Compte local',
+  'login.localHint': 'Un e-mail et un mot de passe, utilisés pour mindlog.todo uniquement.',
+  'login.mindlogIdTitle': 'Compte mindlog id',
+  'login.mindlogIdHint':
+    'Une seule identité pour toutes les apps mindlog, avec connexion par passkey — aucun mot de passe à retenir.',
+  'login.mindlogIdRegisterBtn': 'Continuer avec mindlog id',
   'login.mindlogIdEmailTitle': 'Encore une étape',
   'login.mindlogIdEmailHint':
     "Votre mindlog id n'a pas d'e-mail enregistré. Saisissez-en un pour finaliser la création de votre compte.",

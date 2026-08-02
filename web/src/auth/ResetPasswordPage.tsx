@@ -32,7 +32,10 @@ export function ResetPasswordPage({ token }: { token: string }) {
   return (
     <div className="auth-card">
       <h1>mindlog.todo</h1>
-      <p className="muted">{t('reset.title')}</p>
+      {/* Le sous-titre est une consigne ("choisissez un mot de passe") : une fois
+          le changement effectué il contredit le message de succès juste en
+          dessous. Il ne vaut donc que tant que le formulaire est affiché. */}
+      {!done && <p className="muted">{t('reset.title')}</p>}
       {done ? (
         <>
           <div className="info">{t('reset.success')}</div>

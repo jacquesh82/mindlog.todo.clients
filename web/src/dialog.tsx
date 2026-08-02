@@ -89,10 +89,12 @@ export function DialogProvider({ children }: { children: ReactNode }) {
                 autoFocus={req.kind === 'confirm'}
                 onClick={() => close(req.kind === 'confirm' ? true : value.trim() || null)}
                 disabled={req.kind === 'prompt' && !value.trim()}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 ${
+                className={`rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-50 ${
                   req.kind === 'confirm' && req.danger
-                    ? 'bg-[var(--color-p1)] hover:opacity-90'
-                    : 'bg-brand hover:bg-brand-hover'
+                    ? // Le rouge de danger n'est pas la teinte du produit : il
+                      // garde son encre blanche.
+                      'bg-[var(--color-p1)] text-white hover:opacity-90'
+                    : 'bg-brand text-brand-ink hover:bg-brand-hover'
                 }`}
               >
                 {req.kind === 'confirm' ? req.confirmLabel ?? t('dialog.ok') : t('dialog.ok')}

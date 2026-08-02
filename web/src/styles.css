@@ -52,12 +52,29 @@
   color: var(--color-muted);
 }
 
-/* mindlog design tokens — a Todoist-like palette in mindlog red. Exposed to
-   Tailwind v4 utilities (e.g. bg-brand, text-brand) via @theme. */
+/* mindlog design tokens — exposed to Tailwind v4 utilities (bg-brand,
+   text-brand, text-brand-ink…) via @theme.
+
+   TEINTE DU PRODUIT : todo = teinte 2 de l'échelle de la suite (hue 36), les
+   mêmes valeurs que la vitrine (`mindlog.landings/todo/src/styles/global.css`)
+   et que la pastille todo du rail. L'app était restée sur le rouge mindlog,
+   qui est la teinte 1 — celle de talk : deux produits portaient la même
+   couleur, et aucun des deux celle de sa vitrine.
+
+   Pourquoi #8f621e en clair et non l'ambre vif : on pose du texte sur
+   `bg-brand` partout, et à 68 % de luminosité l'ambre ne donne que 1,8:1 avec
+   du blanc. En clair on descend à 34 % (5,4:1 sur blanc) ; en sombre on garde
+   l'ambre vif, mais le texte passe en `--color-brand-ink`, presque noir.
+
+   `--color-p1..p4` sont les priorités de l'application : elles ne suivent pas
+   la teinte du produit. */
 @theme {
-  --color-brand: #db4c3f;
-  --color-brand-hover: #c53727;
-  --color-brand-soft: #fde8e6;
+  --color-brand: #8f621e;
+  --color-brand-hover: #744d14;
+  --color-brand-soft: #fbf0dd;
+  /* Encre lisible SUR `--color-brand` — jamais `text-white` en dur, sinon le
+     thème sombre (et les accents clairs du sélecteur) deviennent illisibles. */
+  --color-brand-ink: #ffffff;
   --color-ink: #202020;
   --color-muted: #808080;
   --color-line: #ececec;
@@ -72,9 +89,12 @@
 /* Dark mode: override the @theme tokens (higher specificity than :root) so all
    Tailwind utilities like bg-surface / text-ink follow the theme at runtime. */
 :root[data-theme='dark'] {
-  --color-brand: #e35d50;
-  --color-brand-hover: #f06a5d;
-  --color-brand-soft: #3a2320;
+  --color-brand: #edba6e;
+  --color-brand-hover: #f5c987;
+  --color-brand-soft: #33270f;
+  /* L'ambre vif est trop clair pour du blanc (1,8:1) : on l'encre en brun très
+     sombre, 11,7:1. Même valeur que `--color-accent-ink` de la vitrine. */
+  --color-brand-ink: #241a0a;
   --color-ink: #e6e8ec;
   --color-muted: #8b93a1;
   --color-line: #2a2f3a;
@@ -215,9 +235,30 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .mindlogid-btn, .mindlogid-label { animation: none; }
 }
+/* Inscription : un bloc par nature de compte (local / mindlog id). Pas de cadre
+   imbriqué — la carte est étroite, un titre et un intertitre suffisent à séparer. */
+.auth-card > .auth-block:first-of-type { margin-top: 1.25rem; }
+.auth-block h2 { margin: 0; font-size: 0.95rem; }
+.auth-block .hint { margin: 0.25rem 0 0; font-size: 0.82rem; line-height: 1.35; }
+.auth-block form { margin-top: 0.75rem; }
+.auth-block > .google-btn { margin-top: 0.75rem; }
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1.1rem 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.auth-or::before, .auth-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
 .forgot-link { display: block; margin: -0.3rem 0 0.2rem auto; font-size: 0.82rem; }
 .info { color: var(--accent); margin: 0.5rem 0; font-size: 0.88rem; }
-.switch { text-align: center; }
+.switch { text-align: center; margin-top: 1.1rem; }
 
 /* App shell */
 .app header {
@@ -284,3 +325,51 @@ body {
 .secret { background: var(--panel-2); border: 1px solid var(--accent); padding: 0.8rem; border-radius: 8px; margin: 0.6rem 0; display: grid; gap: 0.4rem; }
 .secret code { word-break: break-all; }
 code { background: var(--bg); padding: 0.1rem 0.3rem; border-radius: 4px; }
+
+/* Tour guidé (Shepherd). La feuille de style d'origine borne l'infobulle à
+   400px sans tenir compte du viewport : sur un téléphone en portrait elle
+   dépasse le cadre. `mindlog-shepherd` est posée par tour.ts sur chaque étape.
+   L'ancrage lui-même est neutralisé sous 768px (cf. tour.ts), la sidebar y
+   étant un tiroir hors écran. */
+.shepherd-element.mindlog-shepherd {
+  max-width: min(92vw, 24rem);
+}
+
+/* Barres système (Android edge-to-edge, encoche iOS).
+   `--android-inset-*` est posé par MainActivity.java ; `env(safe-area-inset-*)`
+   sert de repli — dans une WebView Android il ne couvre que les découpes, pas
+   les barres, d'où les deux sources. Les conteneurs qui portent cette classe
+   sont en `box-sizing: border-box` et gardent donc leur hauteur : le fond peint
+   toujours jusqu'aux bords, seul le contenu se décale. */
+.app-insets {
+  padding-top: var(--android-inset-top, env(safe-area-inset-top, 0px));
+  padding-right: var(--android-inset-right, env(safe-area-inset-right, 0px));
+  padding-bottom: var(--android-inset-bottom, env(safe-area-inset-bottom, 0px));
+  padding-left: var(--android-inset-left, env(safe-area-inset-left, 0px));
+}
+
+/* Le tiroir de navigation est en `fixed` : il échappe au padding de la racine
+   et porte donc ses propres inserts — mais seulement tant qu'il EST un tiroir.
+   À partir de `md` il redevient `static` à l'intérieur de la racine, déjà
+   décalée : les cumuler doublerait la marge (cas d'un téléphone en paysage,
+   dont la largeur dépasse 768px). */
+@media (max-width: 767px) {
+  .app-insets-drawer {
+    padding-top: var(--android-inset-top, env(safe-area-inset-top, 0px));
+    padding-bottom: var(--android-inset-bottom, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Barre d'onglets et flottants du bas : en `fixed`, ils échappent au padding de
+   la racine. `env(safe-area-inset-bottom)` seul ne suffisait pas — dans une
+   WebView Android il ignore la barre de navigation, et les libellés passaient
+   dessous. */
+.app-insets-bottom {
+  /* `content-box` est le point clé : la barre porte une hauteur fixe (h-16) et,
+     en `border-box` (le défaut global), le padding l'aurait rognée de l'intérieur
+     — icônes et libellés écrasés dans les quelques pixels restants. En
+     `content-box` la hauteur reste celle du contenu et l'insert S'AJOUTE, si
+     bien que la barre grandit juste assez pour couvrir la zone système. */
+  box-sizing: content-box;
+  padding-bottom: var(--android-inset-bottom, env(safe-area-inset-bottom, 0px));
+}

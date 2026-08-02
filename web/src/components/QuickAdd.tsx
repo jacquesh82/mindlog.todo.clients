@@ -141,7 +141,7 @@ export function QuickAdd({ defaultProjectId, defaultSectionId, projects, labels,
           <button
             onClick={() => void submit()}
             disabled={busy || !text.trim()}
-            className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white transition hover:bg-brand-hover disabled:opacity-50"
+            className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-ink transition hover:bg-brand-hover disabled:opacity-50"
           >
             {t('task.add')}
           </button>

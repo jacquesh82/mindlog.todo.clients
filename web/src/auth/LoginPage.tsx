@@ -113,10 +113,58 @@ export function LoginPage() {
 
   const title =
     mode === 'login'
-      ? 'Sign in to your account'
+      ? t('login.signInTitle')
       : mode === 'register'
-        ? 'Create an account'
+        ? t('login.registerTitle')
         : t('login.forgotTitle');
+
+  // Formulaire e-mail/mot de passe et bouton mindlog id : mêmes éléments à la
+  // connexion et à l'inscription, mais pas la même mise en page (à l'inscription
+  // ils deviennent deux blocs annoncés). On les monte une fois, on les place deux.
+  const credentialsForm = (
+    <form onSubmit={submit}>
+      {mode === 'register' && (
+        <input
+          placeholder={t('login.displayName')}
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+        />
+      )}
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        required
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        required
+        minLength={8}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      {error && <div className="error">{error}</div>}
+      <button type="submit" disabled={busy}>
+        {mode === 'login' ? t('login.signIn') : t('login.register')}
+      </button>
+    </form>
+  );
+
+  const mindlogIdButton = providers.mindlogId && (
+    <a className="google-btn mindlogid-btn" href={api.mindlogIdUrl(mode === 'register')}>
+      <img
+        src={`${import.meta.env.BASE_URL}milo.svg`}
+        alt=""
+        aria-hidden="true"
+        className="provider-icon"
+      />
+      <span className="mindlogid-label">
+        {mode === 'register' ? t('login.mindlogIdRegisterBtn') : t('login.mindlogIdBtn')}
+      </span>
+    </a>
+  );
 
   return (
     <div className="auth-card">
@@ -146,52 +194,44 @@ export function LoginPage() {
         </form>
       ) : (
         <>
-          <form onSubmit={submit}>
-            {mode === 'register' && (
-              <input
-                placeholder="Display name (optional)"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-              />
-            )}
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              required
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              required
-              minLength={8}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            {error && <div className="error">{error}</div>}
-            <button type="submit" disabled={busy}>
-              {mode === 'login' ? 'Sign in' : 'Register'}
-            </button>
-          </form>
+          {mode === 'register' ? (
+            // Créer un compte, c'est choisir ENTRE deux comptes de nature
+            // différente : un compte local à mindlog.todo, ou une identité
+            // mindlog valable pour toutes les apps. Empilés sans titres, le
+            // second passait pour une variante de connexion du premier — d'où
+            // les deux blocs annoncés, séparés par un « ou ».
+            <>
+              <section className="auth-block">
+                <h2>{t('login.localTitle')}</h2>
+                <p className="muted hint">{t('login.localHint')}</p>
+                {credentialsForm}
+              </section>
 
-          {mode === 'login' && providers.passwordReset && (
-            <button type="button" className="link forgot-link" onClick={() => switchMode('forgot')}>
-              {t('login.forgot')}
-            </button>
+              {providers.mindlogId && (
+                <>
+                  <div className="auth-or">{t('login.or')}</div>
+                  <section className="auth-block">
+                    <h2>{t('login.mindlogIdTitle')}</h2>
+                    <p className="muted hint">{t('login.mindlogIdHint')}</p>
+                    {mindlogIdButton}
+                  </section>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {credentialsForm}
+
+              {providers.passwordReset && (
+                <button type="button" className="link forgot-link" onClick={() => switchMode('forgot')}>
+                  {t('login.forgot')}
+                </button>
+              )}
+
+              {mindlogIdButton}
+            </>
           )}
 
-          {providers.mindlogId && (
-            <a className="google-btn mindlogid-btn" href={api.mindlogIdUrl()}>
-              <img
-                src={`${import.meta.env.BASE_URL}milo.svg`}
-                alt=""
-                aria-hidden="true"
-                className="provider-icon"
-              />
-              <span className="mindlogid-label">{t('login.mindlogIdBtn')}</span>
-            </a>
-          )}
           {providers.google && (
             <a className="google-btn" href={api.googleUrl()}>
               Sign in with Google
@@ -199,13 +239,13 @@ export function LoginPage() {
           )}
 
           <p className="muted switch">
-            {mode === 'login' ? "No account?" : 'Have an account?'}{' '}
+            {mode === 'login' ? t('login.noAccount') : t('login.haveAccount')}{' '}
             <button
               type="button"
               className="link"
               onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
             >
-              {mode === 'login' ? 'Register' : 'Sign in'}
+              {mode === 'login' ? t('login.register') : t('login.signIn')}
             </button>
           </p>
         </>

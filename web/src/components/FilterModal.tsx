@@ -97,7 +97,7 @@ export function FilterModal({ filter, onClose, onSaved }: Props) {
             <button
               onClick={() => void save()}
               disabled={busy || !name.trim() || !query.trim()}
-              className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-50"
+              className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-brand-ink hover:bg-brand-hover disabled:opacity-50"
             >
               {t('task.save')}
             </button>

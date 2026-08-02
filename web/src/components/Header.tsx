@@ -69,7 +69,7 @@ export function Header({ onAdded, onMenu }: Props) {
         <button
           type="submit"
           disabled={busy || !text.trim()}
-          className="shrink-0 rounded-md bg-brand px-3 py-1 text-sm font-medium text-white transition hover:bg-brand-hover disabled:opacity-50"
+          className="shrink-0 rounded-md bg-brand px-3 py-1 text-sm font-medium text-brand-ink transition hover:bg-brand-hover disabled:opacity-50"
         >
           {t('task.add')}
         </button>
