@@ -42,8 +42,8 @@ de chaque itération et mis à jour à la fin.
 
 ### T2 — Notes et carnets
 
-- [ ] Contrat : documenter `notes` (10 routes) — carnets, pages, conversion en tâches
-- [ ] DTO + `NotesApi` + `NotesRepository`
+- [x] Contrat : `notes` documenté — **15 routes** (et non 10 : le web n'en appelle pas la moitié), 61 endpoints publiés, test vert
+- [x] DTO générés + `NotesApi` (15 routes) + `NotesRepository`
 - [ ] Écrans : liste des carnets, liste des pages, éditeur
 - [ ] Recette S24
 
@@ -86,3 +86,18 @@ de chaque itération et mis à jour à la fin.
   Compteurs calculés depuis une seule lecture des tâches ouvertes, comme
   `reloadSidebar` côté web. `:app:assembleDebug` vert, APK installé sur le S24 ;
   **recette visuelle non faite**, le téléphone s'est reverrouillé.
+- 2026-08-02 — T2 (1/4) : contrat des notes publié côté `mindlog.todo` et commité
+  (`f756b10`). 15 routes et non 10 : le client web ignore la duplication de page,
+  le résumé de carnet, l'extraction de tâches et la mise au propre de croquis.
+  `Notebook`/`NotePage`/`NotePageHit` convertis en schémas Zod, le résumé servant
+  de forme de référence que la page complète étend. Les corps de requête qui
+  vivaient dans le fichier de routes sont remontés dans le domaine — invisibles
+  du document sinon. Prochaine étape : DTO générés + `NotesApi` + dépôt.
+- 2026-08-02 — T2 (2/4) : DTO régénérés, `NotesApi` et `NotesRepository` livrés,
+  `:app:assembleDebug` vert. Le client natif passe à 47 endpoints. Deux écarts
+  volontaires avec les autres dépôts, justifiés dans la classe : pas d'abonnement
+  au flux de changements (le serveur n'émet aucun événement pour les notes —
+  `ChangeEvent.Entity` ne connaît que task/project/section/label/filter), et le
+  contenu des pages n'est jamais mis en cache (plusieurs Mo par page possibles).
+  Contrat corrigé au passage : `DrawShape` est nommé, sinon le générateur
+  produisait `DrawCleanupRequestShapesInner`. Reste : les écrans.

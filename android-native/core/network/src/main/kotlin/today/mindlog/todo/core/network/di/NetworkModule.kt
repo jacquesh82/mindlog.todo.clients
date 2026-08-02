@@ -13,6 +13,7 @@ import today.mindlog.todo.core.network.AuthInterceptor
 import today.mindlog.todo.core.network.BaseUrlInterceptor
 import today.mindlog.todo.core.network.TokenAuthenticator
 import today.mindlog.todo.core.network.api.AuthApi
+import today.mindlog.todo.core.network.api.NotesApi
 import today.mindlog.todo.core.network.api.TodoApi
 import java.util.concurrent.TimeUnit
 import javax.inject.Qualifier
@@ -84,4 +85,10 @@ object NetworkModule {
 
     @Provides @Singleton
     fun todoApi(@ApiClient retrofit: Retrofit): TodoApi = retrofit.create(TodoApi::class.java)
+
+    // Même client que TodoApi : mêmes en-têtes, même renouvellement de jeton.
+    // Seule l'interface est découpée, pas la pile réseau.
+    @Provides
+    @Singleton
+    fun notesApi(@ApiClient retrofit: Retrofit): NotesApi = retrofit.create(NotesApi::class.java)
 }
