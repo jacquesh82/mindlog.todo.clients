@@ -22,12 +22,13 @@ const config: CapacitorConfig = {
   appId: 'today.mindlog.todo',
   appName: 'mindlog todo',
   webDir: '../web/dist',
-  ios: {
-    // La SPA gère elle-même ses marges de sécurité (`env(safe-area-inset-*)`,
-    // cf. le correctif « barres système sur mobile » du client web). Laisser
-    // UIKit ajouter les siennes par-dessus décalerait tout deux fois.
-    contentInset: 'never',
-  },
+  // Volontairement AUCUN réglage `ios`. La coquille Android n'en a qu'un
+  // (`allowMixedContent: false`), et tout ce qui existe ici sans exister là-bas
+  // est un écart de comportement de plus entre deux apps censées être la même.
+  //
+  // Un `contentInset: 'never'` a figuré ici, déduit du fait que la SPA gère ses
+  // propres `env(safe-area-inset-*)`. Déduit, pas mesuré : rien dans `web/` ne
+  // le demandait. Il est retiré tant qu'une observation ne le justifie pas.
 };
 
 export default config;
